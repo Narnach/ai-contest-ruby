@@ -146,3 +146,24 @@ class PlanetWars
     STDOUT.flush
   end
 end
+
+class AI
+  def do_turn(pw)
+    # todo for actual AIs
+  end
+  
+  def run
+    map_data = ''
+    loop do
+      current_line = gets.strip rescue break
+      if current_line.length >= 2 and current_line[0..1] == "go"
+        pw = PlanetWars.new(map_data)
+        do_turn(pw)
+        pw.finish_turn
+        map_data = ''
+      else
+        map_data += current_line + "\n"
+      end
+    end
+  end
+end
