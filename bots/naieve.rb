@@ -1,6 +1,6 @@
-require "./planetwars.rb"
-
 class Naieve < AI
+  register 'naieve'
+  
   def do_turn(pw)
     # don't do anything if any of the following is true:
     # (1) we have more than three fleets in flight

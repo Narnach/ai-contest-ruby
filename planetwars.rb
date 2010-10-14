@@ -148,6 +148,19 @@ class PlanetWars
 end
 
 class AI
+  def self.find(name)
+    bots[name]
+  end
+  
+  def self.register(name, klass=self)
+    return AI.register(name, klass) unless self==AI
+    bots[name]=klass
+  end
+  
+  def self.bots
+    @bots ||= Hash.new
+  end
+  
   def do_turn(pw)
     # todo for actual AIs
   end
