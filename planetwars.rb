@@ -29,6 +29,18 @@ class Planet
   def remove_ships(n)
     @num_ships -= n
   end
+  
+  def neutral?
+    self.owner == 0
+  end
+  
+  def enemy?
+    self.owner > 1
+  end
+  
+  def mine?
+    self.owner == 1
+  end
 end
 
 class PlanetWars
@@ -148,12 +160,16 @@ class PlanetWars
 end
 
 class AI
+  def initialize
+    @turn_start=Time.now
+  end
+
   def self.find(name)
     bots[name]
   end
   
-  def self.register(name, klass=self)
-    return AI.register(name, klass) unless self==AI
+  def self.bot(name, klass=self)
+    return AI.bot(name, klass) unless self==AI
     bots[name]=klass
   end
   
@@ -170,13 +186,27 @@ class AI
     loop do
       current_line = gets.strip rescue break
       if current_line.length >= 2 and current_line[0..1] == "go"
-        pw = PlanetWars.new(map_data)
-        do_turn(pw)
-        pw.finish_turn
+        @turn_start = Time.now
+        @pw = PlanetWars.new(map_data)
+        begin
+          do_turn
+        rescue => e
+          log "#{e.class.name}: #{e.message}"
+          log e.backtrace.first
+        end
+        @pw.finish_turn
         map_data = ''
       else
         map_data += current_line + "\n"
       end
     end
+  end
+  
+  def time_left
+    (@turn_start + 1) - Time.now
+  end
+  
+  def log(msg)
+    puts "# (left: #{time_left}) #{msg}"
   end
 end
