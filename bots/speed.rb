@@ -14,8 +14,8 @@ class Speed < AI
       return log('almost out of time') if time_left < 0.1
       next if planet.num_ships == 0
 
-      # From the closest 5 planets, pick the one with the highest growth rate
-      target = @pw.not_my_planets.sort_by {|p| @pw.distance(planet, p)}[0...5].sort_by {|p| p.growth_rate}.last
+      # From the closest 5 planets, pick the one with the best tradeoff between defending ships and growth rate
+      target = @pw.not_my_planets.sort_by {|p| @pw.distance(planet, p)}[0...5].sort_by {|p| (p.growth_rate * 10) - p.num_ships}.last
 
       # Check how many ships we need to send to defeat it
       if target.neutral?
