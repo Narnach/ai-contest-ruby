@@ -39,14 +39,6 @@ class Planet
     @planet_id, @owner, @num_ships = planet_id, owner, num_ships
     @growth_rate, @x, @y = growth_rate, x, y
   end
-
-  def add_ships(n)
-    @num_ships += amt
-  end
-
-  def remove_ships(n)
-    @num_ships -= n
-  end
 end
 
 class PlanetWars
