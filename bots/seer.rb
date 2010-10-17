@@ -5,6 +5,8 @@ class Seer < AI
   version 2
 
   LOOK_AHEAD=10
+  PROXIMITY = 5
+  PLANET_TURN_ESTIMATE = 15
 
   def do_turn
     return if @pw.my_planets.length == 0
@@ -30,7 +32,7 @@ class Seer < AI
       next if planet.num_ships == 0
 
       # From the closest 5 planets, pick the one with the best tradeoff between defending ships and growth rate
-      target = @pw.not_my_planets.sort_by {|p| @pw.distance(planet, p)}[0...5].sort_by {|p| (p.growth_rate * 10) - p.num_ships}.last
+      target = @pw.not_my_planets.sort_by {|p| @pw.distance(planet, p)}[0...PROXIMITY].sort_by {|p| (p.growth_rate * PLANET_TURN_ESTIMATE) - p.num_ships}.last
 
       # Check how many ships we need to send to defeat it
       if target.neutral?
@@ -48,10 +50,18 @@ class Seer < AI
           ships
         end
       end
+      enemy_ships_sent = @pw.enemy_fleets.inject(0) do |ships, fleet|
+        if fleet.destination_planet == target.planet_id
+          ships + fleet.num_ships
+        else
+          ships
+        end
+      end
+      planet_growth = target.neutral? ? 0 : (@pw.travel_time(planet, target) * target.growth_rate)
 
       # Determine how many ships to send
-      ships_left = ships_needed - ships_sent
-
+      ships_left = (ships_needed + planet_growth + enemy_ships_sent) - ships_sent
+      
       # Only send fleets that could win by themselves
       next if ships_left > planet.num_ships
 
