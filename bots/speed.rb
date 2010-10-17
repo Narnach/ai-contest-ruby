@@ -6,9 +6,9 @@ class Speed < AI
   bot 'speed'
   version 2
 
-  MAX_FLEETS = 10
+  MAX_FLEETS = 100
   PROXIMITY = 5
-  PLANET_TURN_ESTIMATE = 10
+  PLANET_TURN_ESTIMATE = 15
 
   def do_turn
     return if @pw.my_fleets.length >= MAX_FLEETS
