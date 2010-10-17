@@ -38,9 +38,16 @@ class Speed < AI
           ships
         end
       end
+      enemy_ships_sent = @pw.enemy_fleets.inject(0) do |ships, fleet|
+        if fleet.destination_planet == target.planet_id
+          ships + fleet.num_ships
+        else
+          ships
+        end
+      end
 
       # Determine how many ships to send
-      ships_left = ships_needed - ships_sent
+      ships_left = (ships_needed + enemy_ships_sent) - ships_sent
 
       # Only send fleets that could win by themselves
       next if ships_left > planet.num_ships
