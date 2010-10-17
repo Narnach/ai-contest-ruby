@@ -42,6 +42,7 @@ class AI
           log "#{e.class.name}: #{e.message}"
           log e.backtrace.first
         end
+        log "Finishing turn"
         @pw.finish_turn
         map_data = ''
       else
