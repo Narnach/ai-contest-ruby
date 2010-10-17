@@ -1,6 +1,14 @@
 class AI
+  attr_accessor :logging
+
   def initialize
     @turn_start=Time.now
+  end
+
+  def self.version(version=nil)
+    @version ||= 1
+    @version = version unless version.nil?
+    @version
   end
 
   def self.find(name)
@@ -28,7 +36,7 @@ class AI
         @turn_start = Time.now
         @pw = PlanetWars.new(map_data)
         begin
-          log_state
+          log_state if self.logging
           do_turn
         rescue => e
           log "#{e.class.name}: #{e.message}"
@@ -47,7 +55,7 @@ class AI
   end
 
   def log(msg)
-    puts "# (left: #{time_left}) #{msg}"
+    puts "# (left: %8.06f) %s" % [time_left, msg] if self.logging
   end
 
   def log_state
@@ -62,9 +70,15 @@ class AI
     my_fleets     = @pw.my_fleets.inject(0) {|sum, fleet| sum + fleet.num_ships}
     enemy_fleets  = @pw.enemy_fleets.inject(0) {|sum, fleet| sum + fleet.num_ships}
 
-    log "Growth: me %i / neutral %i / enemy %i" % [my_growth, neutral_growth, enemy_growth]
-    log "Population: me %i / neutral %i / enemy %i" % [my_population, neutral_population, enemy_population]
-    log "Fleets: me %i / enemy %i" % [my_fleets, enemy_fleets]
-    log "Ships: me %i / enemy %i" % [my_fleets + my_population, enemy_fleets + enemy_population]
+    my_ships     = my_population + my_fleets
+    enemy_ships  = enemy_population + enemy_fleets
+
+    my_fleet_pct = my_ships == 0 ? 0.0 : 100.0 * my_fleets / my_ships
+    enemy_fleet_pct = enemy_ships == 0 ? 0.0 : 100.0 * enemy_fleets / enemy_ships
+
+    log "===== #{self.class.name} v#{self.class.version}"
+    log "Me:      T:%4i P:%4i F:%4i (%4.1f%%) G:%3i" % [my_ships, my_population, my_fleets, my_fleet_pct, my_growth]
+    log "Them:    T:%4i P:%4i F:%4i (%4.1f%%) G:%3i" % [enemy_ships, enemy_population, enemy_fleets, enemy_fleet_pct, enemy_growth]
+    log "Neutral: P:%4i G:%3i" % [neutral_population, neutral_growth]
   end
 end
