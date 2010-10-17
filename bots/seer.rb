@@ -2,6 +2,8 @@
 # but it accounts for planet growth and fleets in the air. It predicts the future.
 class Seer < AI
   bot 'seer'
+  # v1: Speed clone, remove fleet limit
+  # v2: Naieve claim strategy pays attention to fleets and growth
   version 2
 
   LOOK_AHEAD=10
@@ -24,7 +26,7 @@ class Seer < AI
     # * Adjust Speed bot behaviour to use Strikeforce instead of population
     self.naieve_claim_strategy
   end
-  
+
   def naieve_claim_strategy
     # Old Speed bot behaviour, will eventually be dropped once all logic has been redone.
     @pw.my_planets.each do |planet|
@@ -41,8 +43,6 @@ class Seer < AI
         ships_needed = target.num_ships + 1 + (@pw.distance(planet, target) * target.growth_rate).to_i
       end
 
-      # Discount how many ships are already underway
-      # TODO: Discount flight time left against growth rate of enemy planet
       ships_sent = @pw.my_fleets.inject(0) do |ships, fleet|
         if fleet.destination_planet == target.planet_id
           ships + fleet.num_ships
@@ -61,7 +61,7 @@ class Seer < AI
 
       # Determine how many ships to send
       ships_left = (ships_needed + planet_growth + enemy_ships_sent) - ships_sent
-      
+
       # Only send fleets that could win by themselves
       next if ships_left > planet.num_ships
 

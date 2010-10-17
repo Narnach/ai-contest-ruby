@@ -4,6 +4,8 @@
 # taking back planets that have been stolen by the enemy.
 class Speed < AI
   bot 'speed'
+  # v1: Naieve claim strategy: each planet picks the most optimal close planet and sends ships to conquer it
+  # v2: Naieve claim strategy pays attention to fleets and growth
   version 2
 
   MAX_FLEETS = 100
@@ -29,8 +31,6 @@ class Speed < AI
         ships_needed = target.num_ships + 1 + (@pw.distance(planet, target) * target.growth_rate).to_i
       end
 
-      # Discount how many ships are already underway
-      # TODO: Discount flight time left against growth rate of enemy planet
       ships_sent = @pw.my_fleets.inject(0) do |ships, fleet|
         if fleet.destination_planet == target.planet_id
           ships + fleet.num_ships
