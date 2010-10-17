@@ -1,6 +1,8 @@
 # Seer behaves like the Speed bot (attack the most valuable planet nearby),
 # but it accounts for planet growth and fleets in the air. It predicts the future.
 class Seer < AI
+  attr_accessor :reserved
+
   bot 'seer'
   # v1: Speed clone, remove fleet limit
   # v2: Naieve claim strategy pays attention to fleets and growth
@@ -10,9 +12,15 @@ class Seer < AI
   PROXIMITY = 5
   PLANET_TURN_ESTIMATE = 15
 
+  def reserved
+    @reserved ||= Hash.new
+  end
+
   def do_turn
     return if @pw.my_planets.length == 0
     return if @pw.not_my_planets.length == 0
+
+    self.reserved.clear
 
     # Calculate planet population for the next X turns for all planets
     # * Minimum population of my planets is the Strikeforce
@@ -23,7 +31,7 @@ class Seer < AI
     # * Dispatch help from Strikeforce based on shortest-term threads go firsts
     # Find targets of opportunity
     # * Neutral planet that gets taken over: SNIPE!
-    # * Adjust Speed bot behaviour to use Strikeforce instead of population
+    # * Use naieve claim strategy for remaining Strikeforce
     self.naieve_claim_strategy
   end
 
@@ -66,9 +74,17 @@ class Seer < AI
       next if ships_left > planet.num_ships
 
       # Send ships if we have to
-      num_ships = [ships_left, planet.num_ships].min
+      num_ships = [ships_left, strikeforce_for(planet.planet_id)].min
       next if num_ships <= 0
       @pw.issue_order(planet.planet_id, target.planet_id, num_ships)
     end
+  end
+
+  def strikeforce_for(planet_id)
+    @pw.planets[planet_id].num_ships - reserved_for(planet_id)
+  end
+
+  def reserved_for(planet_id)
+    @reserved[planet_id]||=0
   end
 end
