@@ -4,7 +4,8 @@ class Seer < AI
   bot 'seer'
   # v1: Speed clone, remove fleet limit
   # v2: Naieve claim strategy pays attention to fleets and growth
-  version 2
+  # v3: Strikeforce calculations help in finding targets
+  version 3
 
   LOOK_AHEAD=10
   PROXIMITY = 5
@@ -38,59 +39,63 @@ class Seer < AI
   def naieve_claim_strategy
     # Old Speed bot behaviour, will eventually be dropped once all logic has been redone.
     @pw.my_planets.each do |planet|
-      return log('almost out of time') if time_left < 0.1
-      strikeforce = strikeforce_for(planet.planet_id)
-      if strikeforce == 0
-        log "Strikeforce for planet #{planet.planet_id} is 0."
-        next
-      end
-
       # From the closest 5 planets, pick the one with the best tradeoff between defending ships and growth rate
-      target = @pw.not_my_planets.sort_by {|p| @pw.distance(planet, p)}[0...PROXIMITY].sort_by {|p| (p.growth_rate * PLANET_TURN_ESTIMATE) - p.num_ships}.last
+      @pw.not_my_planets.sort_by {|p| @pw.distance(planet, p)}[0...PROXIMITY].select{|planet| strikeforce_for(planet.planet_id) > 0}.sort_by {|p| (p.growth_rate * PLANET_TURN_ESTIMATE) - p.num_ships}.reverse.each do |target|
+        return log('almost out of time') if time_left < 0.1
+        strikeforce = strikeforce_for(planet.planet_id)
+        if strikeforce == 0
+          log "Strikeforce for planet #{planet.planet_id} is 0."
+          break
+        end
 
-      # Check how many ships we need to send to defeat it
-      if target.neutral?
+        log "Considering planet #{planet.planet_id} attacks #{target.planet_id}"
+        # Check how many ships we need to send to defeat it
         ships_needed = target.num_ships + 1
-      else
-        ships_needed = target.num_ships + 1 + (@pw.distance(planet, target) * target.growth_rate).to_i
-      end
 
-      ships_sent = @pw.my_fleets.inject(0) do |ships, fleet|
-        if fleet.destination_planet == target.planet_id
-          ships + fleet.num_ships
-        else
-          ships
+        # Our ships already underway
+        ships_sent = @pw.my_fleets.inject(0) do |ships, fleet|
+          if fleet.destination_planet == target.planet_id
+            ships + fleet.num_ships
+          else
+            ships
+          end
         end
-      end
-      enemy_ships_sent = @pw.enemy_fleets.inject(0) do |ships, fleet|
-        if fleet.destination_planet == target.planet_id
-          ships + fleet.num_ships
-        else
-          ships
+
+        # Enemy ships already underway
+        enemy_ships_sent = @pw.enemy_fleets.inject(0) do |ships, fleet|
+          if fleet.destination_planet == target.planet_id
+            ships + fleet.num_ships
+          else
+            ships
+          end
         end
+
+        # Enemy planet growth
+        planet_growth = target.neutral? ? 0 : (@pw.travel_time(planet, target) * target.growth_rate)
+
+        # Determine how many ships to send
+        ships_left = (ships_needed + planet_growth + enemy_ships_sent) - ships_sent
+        log "ships_left = (ships_needed + planet_growth + enemy_ships_sent) - ships_sent :: #{ships_left} = (#{ships_needed} + #{planet_growth} + #{enemy_ships_sent}) - #{ships_sent}"
+
+        # Only send fleets that could win by themselves
+        if strikeforce < ships_left
+          log "The number of ships we want to send from #{planet.planet_id} to #{target.planet_id} is #{ships_left}. Strikeforce is only #{strikeforce}, so skipping it."
+          break
+        end
+
+        # Send ships if we have to
+        num_ships = [ships_left, strikeforce].min
+
+        if num_ships <= 0
+          log "The number of ships we want to send from #{planet.planet_id} to #{target.planet_id} is #{num_ships}, so skipping it. Needed: #{ships_left}, S: #{strikeforce}."
+          break
+        end
+
+        log "Attack plans from #{planet.planet_id} (P:#{planet.num_ships}, S:#{strikeforce}) to #{target.planet_id} (P:#{target.num_ships}): F:#{num_ships}"
+        @pw.issue_order(planet.planet_id, target.planet_id, num_ships)
+        self.strikeforces[planet.planet_id] -= num_ships
+        self.strikeforces[target.planet_id] -= num_ships
       end
-      planet_growth = target.neutral? ? 0 : (@pw.travel_time(planet, target) * target.growth_rate)
-
-      # Determine how many ships to send
-      ships_left = (ships_needed + planet_growth + enemy_ships_sent) - ships_sent
-      log "ships_left = (ships_needed + planet_growth + enemy_ships_sent) - ships_sent :: #{ships_left} = (#{ships_needed} + #{planet_growth} + #{enemy_ships_sent}) - #{ships_sent}"
-
-      # Only send fleets that could win by themselves
-      if strikeforce < ships_left
-        log "The number of ships we want to send from #{planet.planet_id} to #{target.planet_id} is #{ships_left}. Strikeforce is only #{strikeforce}, so skipping it."
-        next
-      end
-
-      # Send ships if we have to
-      num_ships = [ships_left, strikeforce].min
-
-      if num_ships <= 0
-        log "The number of ships we want to send from #{planet.planet_id} to #{target.planet_id} is #{num_ships}, so skipping it. Needed: #{ships_left}, S: #{strikeforce}."
-        next
-      end
-
-      log "Attack plans from #{planet.planet_id} (P:#{planet.num_ships}, S:#{strikeforce}) to #{target.planet_id} (P:#{target.num_ships}): F:#{num_ships}"
-      @pw.issue_order(planet.planet_id, target.planet_id, num_ships)
     end
   end
 
