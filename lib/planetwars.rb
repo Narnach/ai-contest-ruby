@@ -1,11 +1,26 @@
 # This file comes from the starter kit
 
+module Ownership
+  def neutral?
+    self.owner == 0
+  end
+
+  def enemy?
+    self.owner > 1
+  end
+
+  def mine?
+    self.owner == 1
+  end
+end
+
 class Fleet
-  attr_reader :owner, :num_ships, :source_planet, 
+  include Ownership
+  attr_reader :owner, :num_ships, :source_planet,
     :destination_planet, :total_trip_length, :turns_remaining
- 
-   def initialize(owner, num_ships, source_planet, 
-                 destination_planet, total_trip_length, 
+
+   def initialize(owner, num_ships, source_planet,
+                 destination_planet, total_trip_length,
                  turns_remaining)
     @owner, @num_ships = owner, num_ships
     @source_planet = source_planet
@@ -16,6 +31,7 @@ class Fleet
 end
 
 class Planet
+  include Ownership
   attr_reader :planet_id, :growth_rate, :x, :y
   attr_accessor :owner, :num_ships
 
@@ -30,18 +46,6 @@ class Planet
 
   def remove_ships(n)
     @num_ships -= n
-  end
-  
-  def neutral?
-    self.owner == 0
-  end
-  
-  def enemy?
-    self.owner > 1
-  end
-  
-  def mine?
-    self.owner == 1
   end
 end
 
