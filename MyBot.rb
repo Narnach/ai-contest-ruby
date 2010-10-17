@@ -9,7 +9,7 @@ end
 
 VERBOSE = ARGV.delete('-v')=='-v'
 
-ai_class = AI.find(ARGV.shift || "speed")
+ai_class = AI.find(ARGV.shift || "seer")
 bot = ai_class.new
 bot.logging = VERBOSE
 bot.run
