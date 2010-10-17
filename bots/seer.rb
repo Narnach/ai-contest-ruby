@@ -5,7 +5,8 @@ class Seer < AI
   # v1: Speed clone, remove fleet limit
   # v2: Naieve claim strategy pays attention to fleets and growth
   # v3: Strikeforce calculations help in finding targets
-  version 3
+  # v4: Multiple reactive strategies are implemented. Speed bot still wins 100%, though.
+  version 4
 
   LOOK_AHEAD=10
   PROXIMITY = 5
@@ -22,11 +23,16 @@ class Seer < AI
     self.calculate_strikeforce
 
     # Reinforce my planets that are under attack
-    # * Negative future population = reinforce from Strikeforce
+    # * Negative strikeforce means: HELP!
     # * Shortest-term threats go first
+    self.reinforce_planets_in_need
 
     # Double-check Targets (non-owned planets with friendly ships en-route) will still be claimed
     # * Dispatch help from Strikeforce based on shortest-term threads go firsts
+    self.reinforce_attack_fleeds_in_need
+
+    # Calculate ratio of friendly / hostile ships in proximity of all our planets and send reinforcements from safe planets to unsafe planets
+    self.reinforce_planets_in_hostile_territory
 
     # Find targets of opportunity
     # * Neutral planet that gets taken over: SNIPE!
@@ -220,6 +226,158 @@ class Seer < AI
         planet.num_ships -= invaders
       end
       return planet
+    end
+  end
+
+  ##### Reinforce
+
+  def reinforce_planets_in_need
+    log "Reinforcing our own planets in need"
+    my_planets_in_need = self.strikeforces.select {|planet_id, strikeforce| strikeforce < 0 && @pw.planets[planet_id].mine?}
+    if my_planets_in_need.empty?
+      log "There are no planets in need"
+      return
+    end
+    most_needy_planets = my_planets_in_need.sort_by {|planet_id, strikeforce| self.forecast[planet_id].index{|future| !future.mine? && future.num_ships == strikeforce.abs} }
+    most_needy_planets.each do |planet_id, strikeforce|
+      turns_before_attack = self.forecast[planet_id].index{|future| !future.mine? && future.num_ships == strikeforce.abs}
+      log "Planet #{planet_id} has a negative strikeforce: #{strikeforce}. It needs help within #{turns_before_attack} turns!"
+
+      # Find planets that could possibly help
+      target = @pw.planets[planet_id]
+      planets_with_strikeforce = @pw.my_planets.select{ |planet| self.strikeforces[planet.planet_id] > 0 }
+      planets_with_strikeforce_in_range = planets_with_strikeforce.select{ |planet| @pw.travel_time(planet, target) <= turns_before_attack }
+
+      # Find the closest planets with the biggest strikeforces first
+      helpful_planets = planets_with_strikeforce_in_range.sort do |a, b|
+        travel_a = @pw.travel_time(a, target)
+        travel_b = @pw.travel_time(b, target)
+        if travel_a == travel_b
+          self.strikeforces[b.planet_id] <=> self.strikeforces[a.planet_id] # Prefer higher strikeforces. b <=> a gives larger b first
+        else
+          travel_a <=> travel_b # Prefer closer planets. a <=> b gives smaller a first
+        end
+      end
+      if helpful_planets.empty?
+        log "There are no helpful planets to help planet #{target.planet_id} within #{turns_before_attack} turns."
+      end
+
+      # Send help until there is enough
+      helpful_planets.each do |planet|
+        helpful_strikeforce = self.strikeforces[planet.planet_id]
+        ships_to_send = [strikeforce.abs, helpful_strikeforce].min
+        log "Reinforce from #{planet.planet_id} (P:#{planet.num_ships}, S:#{helpful_strikeforce}) to #{target.planet_id} (P:#{target.num_ships}, S:#{strikeforce}): F:#{ships_to_send}"
+        @pw.issue_order(planet.planet_id, target.planet_id, ships_to_send)
+        self.strikeforces[planet.planet_id] -= ships_to_send
+        # Don't increase strikeforce on target planet, as it is not yet available
+        strikeforce += ships_to_send
+        break if strikeforce >= 0
+      end
+      if strikeforce < 0
+        log "Unable to send reinforcements to planet #{planet_id}"
+      end
+    end
+  end
+
+  def reinforce_attack_fleeds_in_need
+    log "Reinforcing attack fleeds in need"
+    my_fleets_in_need = @pw.my_fleets.select {|fleet| !@pw.planets[fleet.destination_planet].mine? && self.strikeforces[fleet.destination_planet] > 0}.sort_by {|fleet| self.strikeforces[fleet.destination_planet]}
+    first_to_arrive_at_planet = my_fleets_in_need.inject([]) {|fleets, fleet| fleets.find{|ff| ff.destination_planet == fleet.destination_planet} ? fleets : fleets + [fleet]}
+    if first_to_arrive_at_planet.empty?
+      log "There are no fleets in need of reinforcement"
+      return
+    end
+    first_to_arrive_at_planet.each do |fleet|
+      strikeforce = self.strikeforces[fleet.destination_planet].abs + 1 # Add 1 to actually win the battle as agressor
+      turns_before_attack = fleet.turns_remaining
+      # Find planets that could possibly help
+      target = @pw.planets[fleet.destination_planet]
+      planets_with_strikeforce = @pw.my_planets.select{ |planet| self.strikeforces[planet.planet_id] > 0 }
+      planets_with_strikeforce_in_range = planets_with_strikeforce.select{ |planet| @pw.travel_time(planet, target) <= turns_before_attack }
+
+      # Find the closest planets with the biggest strikeforces first
+      helpful_planets = planets_with_strikeforce_in_range.sort do |a, b|
+        travel_a = @pw.travel_time(a, target)
+        travel_b = @pw.travel_time(b, target)
+        if travel_a == travel_b
+          self.strikeforces[b.planet_id] <=> self.strikeforces[a.planet_id] # Prefer higher strikeforces. b <=> a gives larger b first
+        else
+          travel_a <=> travel_b # Prefer closer planets. a <=> b gives smaller a first
+        end
+      end
+
+      if helpful_planets.empty?
+        log "There are no helpful planets to help fleet #{fleet.id}, who reaches planet #{fleet.destination_planet} in #{fleet.turns_remaining} turns."
+        next
+      end
+
+      # Send help until there is enough
+      helpful_planets.each do |planet|
+        helpful_strikeforce = self.strikeforces[planet.planet_id]
+        ships_to_send = [strikeforce.abs, helpful_strikeforce].min
+        log "Reinforcement for attack fleet. From #{planet.planet_id} (P:#{planet.num_ships}, S:#{helpful_strikeforce}) to #{target.planet_id} (P:#{target.num_ships}, S:#{strikeforce}): F:#{ships_to_send}"
+        @pw.issue_order(planet.planet_id, target.planet_id, ships_to_send)
+        self.strikeforces[planet.planet_id] -= ships_to_send
+        self.strikeforces[target.planet_id] -= ships_to_send
+        strikeforce -= ships_to_send
+        break if strikeforce <= 0
+      end
+      if strikeforce > 0
+        log "Unable to send enough reinforcements to planet #{target.destination_planet}"
+      end
+    end
+  end
+
+  def reinforce_planets_in_hostile_territory
+    log "Reinforcing planets in hostile territory"
+    threat_balance = Hash.new { |hash, key| hash[key] = 0 }
+    @pw.my_planets.each do |target|
+      closest_planets = @pw.planets.sort_by{|planet| @pw.travel_time(planet, target) }[0...PROXIMITY]
+      closest_planets.each do |planet|
+        case planet.owner
+        when 0
+          # neutrals are no threat or help
+        when 1
+          threat_balance[target.planet_id] += planet.num_ships
+        else
+          threat_balance[target.planet_id] -= planet.num_ships
+        end
+      end
+    end
+    sorted_planets = @pw.my_planets.sort_by{|planet| threat_balance[planet.planet_id]}
+    sorted_planets.each do |planet|
+      log "Planet #{planet.planet_id} (P:#{planet.num_ships}, S:#{self.strikeforces[planet.planet_id]}, Threat:#{threat_balance[planet.planet_id]})"
+    end
+
+    # Unsafest first
+    unsafe_planets = sorted_planets.select{|planet| threat_balance[planet.planet_id] < 0}
+    if unsafe_planets.empty?
+      log "There are no unsafe planets"
+      return
+    end
+
+    # Safest first
+    safe_planets = sorted_planets.select{|planet| threat_balance[planet.planet_id] >= 0}.reverse
+    if safe_planets.empty?
+      log "There are no safe planets"
+      return
+    end
+    safe_planets.reject! {|planet| self.strikeforces[planet.planet_id] <= 0}
+    if safe_planets.empty?
+      log "There are no safe planets with a strikeforce"
+      return
+    end
+
+    safe_planets.each_with_index do |planet, index|
+      helpful_strikeforce = self.strikeforces[planet.planet_id]
+      target = unsafe_planets[index % unsafe_planets.size]
+      strikeforce = self.strikeforces[target.planet_id]
+      ships_to_send = helpful_strikeforce / 2
+
+      log "Reinforcement for unsafe planet. From #{planet.planet_id} (P:#{planet.num_ships}, S:#{helpful_strikeforce}) to #{target.planet_id} (P:#{target.num_ships}, S:#{strikeforce}): F:#{ships_to_send}"
+      @pw.issue_order(planet.planet_id, target.planet_id, ships_to_send)
+      self.strikeforces[planet.planet_id] -= ships_to_send
+      # Don't increase strikeforce on target planet, as it is not yet available
     end
   end
 end
