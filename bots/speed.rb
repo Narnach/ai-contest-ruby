@@ -45,10 +45,11 @@ class Speed < AI
           ships
         end
       end
+      planet_growth = target.neutral? ? 0 : (@pw.travel_time(planet, target) * target.growth_rate)
 
       # Determine how many ships to send
-      ships_left = (ships_needed + enemy_ships_sent) - ships_sent
-
+      ships_left = (ships_needed + planet_growth + enemy_ships_sent) - ships_sent
+      
       # Only send fleets that could win by themselves
       next if ships_left > planet.num_ships
 
