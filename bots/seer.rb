@@ -2,15 +2,29 @@
 # but it accounts for planet growth and fleets in the air. It predicts the future.
 class Seer < AI
   bot 'seer'
+  version 2
 
-  LOOK_AHEAD=3
+  LOOK_AHEAD=10
 
   def do_turn
     return if @pw.my_planets.length == 0
     return if @pw.not_my_planets.length == 0
 
     # Calculate planet population for the next X turns for all planets
-
+    # * Minimum population of my planets is the Strikeforce
+    # Reinforce my planets that are under attack
+    # * Negative future population = reinforce from Strikeforce
+    # * Shortest-term threats go first
+    # Double-check Targets (non-owned planets with friendly ships en-route) will still be claimed
+    # * Dispatch help from Strikeforce based on shortest-term threads go firsts
+    # Find targets of opportunity
+    # * Neutral planet that gets taken over: SNIPE!
+    # * Adjust Speed bot behaviour to use Strikeforce instead of population
+    self.naieve_claim_strategy
+  end
+  
+  def naieve_claim_strategy
+    # Old Speed bot behaviour, will eventually be dropped once all logic has been redone.
     @pw.my_planets.each do |planet|
       return log('almost out of time') if time_left < 0.1
       next if planet.num_ships == 0
