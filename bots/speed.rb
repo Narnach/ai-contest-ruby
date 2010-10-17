@@ -4,9 +4,14 @@
 # taking back planets that have been stolen by the enemy.
 class Speed < AI
   bot 'speed'
+  version 2
+
+  MAX_FLEETS = 10
+  PROXIMITY = 5
+  PLANET_TURN_ESTIMATE = 10
 
   def do_turn
-    return if @pw.my_fleets.length >= 10
+    return if @pw.my_fleets.length >= MAX_FLEETS
     return if @pw.my_planets.length == 0
     return if @pw.not_my_planets.length == 0
 
@@ -15,7 +20,7 @@ class Speed < AI
       next if planet.num_ships == 0
 
       # From the closest 5 planets, pick the one with the best tradeoff between defending ships and growth rate
-      target = @pw.not_my_planets.sort_by {|p| @pw.distance(planet, p)}[0...5].sort_by {|p| (p.growth_rate * 10) - p.num_ships}.last
+      target = @pw.not_my_planets.sort_by {|p| @pw.distance(planet, p)}[0...PROXIMITY].sort_by {|p| (p.growth_rate * PLANET_TURN_ESTIMATE) - p.num_ships}.last
 
       # Check how many ships we need to send to defeat it
       if target.neutral?
