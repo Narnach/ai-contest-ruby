@@ -1,0 +1,20 @@
+Stats per player
+* Number of ships
+  * On planets
+  * In transit
+  * on planet / total ships (defense quotient?)
+* Total growth
+
+Each planet can keep track of its surroundings:
+* All planets in range 1/2/3/4/5
+* Closest 3/5/10 planets (once)
+* Distance to all friendly planets (update on takeover and loss)
+* Number of ships that could reach it in 1/2/3/4/5 turns
+* Inbound fleets and arrival times
+
+Based on this, projections can be made:
+* Projected population in next 1/2/3/4/5 turns (current ships, growth per turn, inbound fleets)
+* Forecast/alert state: dead in 1/2/3/4/5 turns
+
+Targets of opportunity can be found:
+* (Nearby) neutral planets with inbound enemy ships, what is the planet's population in the next 1/2/3/4/5 turns? How many ships are en-route, so what is the biggest number of ships required to conquer the planet? In how many turns will the planet 'break-even' in terms of ships expended? What if you factor in hostile ship production that we counter?
