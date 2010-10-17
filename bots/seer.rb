@@ -14,8 +14,6 @@ class Seer < AI
     return if @pw.my_planets.length == 0
     return if @pw.not_my_planets.length == 0
 
-    self.reserved.clear
-
     # Calculate planet population and ownership for the next X turns for all planets based on no new fleets launching
     self.predict_planet_futures
 
@@ -41,7 +39,11 @@ class Seer < AI
     # Old Speed bot behaviour, will eventually be dropped once all logic has been redone.
     @pw.my_planets.each do |planet|
       return log('almost out of time') if time_left < 0.1
-      next if planet.num_ships == 0
+      strikeforce = strikeforce_for(planet.planet_id)
+      if strikeforce == 0
+        log "Strikeforce for planet #{planet.planet_id} is 0."
+        next
+      end
 
       # From the closest 5 planets, pick the one with the best tradeoff between defending ships and growth rate
       target = @pw.not_my_planets.sort_by {|p| @pw.distance(planet, p)}[0...PROXIMITY].sort_by {|p| (p.growth_rate * PLANET_TURN_ESTIMATE) - p.num_ships}.last
@@ -71,33 +73,58 @@ class Seer < AI
 
       # Determine how many ships to send
       ships_left = (ships_needed + planet_growth + enemy_ships_sent) - ships_sent
+      log "ships_left = (ships_needed + planet_growth + enemy_ships_sent) - ships_sent :: #{ships_left} = (#{ships_needed} + #{planet_growth} + #{enemy_ships_sent}) - #{ships_sent}"
 
       # Only send fleets that could win by themselves
-      next if ships_left > planet.num_ships
+      if strikeforce < ships_left
+        log "The number of ships we want to send from #{planet.planet_id} to #{target.planet_id} is #{ships_left}. Strikeforce is only #{strikeforce}, so skipping it."
+        next
+      end
 
       # Send ships if we have to
-      num_ships = [ships_left, strikeforce_for(planet.planet_id)].min
-      next if num_ships <= 0
+      num_ships = [ships_left, strikeforce].min
+
+      if num_ships <= 0
+        log "The number of ships we want to send from #{planet.planet_id} to #{target.planet_id} is #{num_ships}, so skipping it. Needed: #{ships_left}, S: #{strikeforce}."
+        next
+      end
+
+      log "Attack plans from #{planet.planet_id} (P:#{planet.num_ships}, S:#{strikeforce}) to #{target.planet_id} (P:#{target.num_ships}): F:#{num_ships}"
       @pw.issue_order(planet.planet_id, target.planet_id, num_ships)
     end
   end
 
   ###### Strikeforce
 
-  def reserved
-    @reserved ||= Hash.new
+  def strikeforces
+    @strikeforces ||= Hash.new
   end
 
   def strikeforce_for(planet_id)
-    @pw.planets[planet_id].num_ships - reserved_for(planet_id)
-  end
-
-  def reserved_for(planet_id)
-    @reserved[planet_id]||=0
+    self.strikeforces[planet_id]
   end
 
   def calculate_strikeforce
-    # TODO: Calculate strikeforce per planet
+    self.strikeforces.clear
+    self.forecast.each do |planet_id, futures|
+      strikeforce = futures.first.num_ships
+      # log "Initial strikeforce: #{strikeforce}"
+      owner = futures.first.owner
+      futures.each_with_index do |future, turn|
+        if future.owner == owner
+          old_strikeforce = strikeforce
+          strikeforce = [old_strikeforce, future.num_ships].min
+          # log "Update strikeforce: strikeforce = [old_strikeforce, future.num_ships].min :: #{strikeforce} = [#{old_strikeforce}, #{future.num_ships}].min :: future: #{future.inspect}"
+        else
+          # TODO: Add to list of planets that require reinforcement
+          strikeforce = -future.num_ships
+          log "Planet #{planet_id} (O: #{futures.first.owner}, P: #{futures.first.num_ships}) has a strikeforce of #{strikeforce} when it is captured by #{future.owner}."
+          break
+        end
+      end
+      log "Planet #{planet_id} (O: #{futures.first.owner}, P: #{futures.first.num_ships}) has a strikeforce of #{strikeforce}" if strikeforce >= 0
+      self.strikeforces[planet_id] = strikeforce
+    end
   end
 
   ###### Future prediction
@@ -109,9 +136,13 @@ class Seer < AI
   def predict_planet_futures
     self.forecast.clear
     @pw.planets.each do |planet|
+      # log "Original: #{planet.inspect}"
       self.forecast[planet.planet_id] = [planet.clone]
+      # log "Clone: #{self.forecast[planet.planet_id].last.inspect}"
       (1...LOOK_AHEAD).each do |future_turn|
-        self.forecast[planet.planet_id] << self.future_planet(planet.planet_id, future_turn)
+        prediction = self.future_planet(planet.planet_id, future_turn)
+        # log "Prediction #{future_turn}: #{prediction.inspect}"
+        self.forecast[planet.planet_id] << prediction
       end
     end
   end
@@ -121,8 +152,10 @@ class Seer < AI
     planet = self.forecast[planet_id].last.clone
     if planet.neutral?
       # No growth, battles can be 3-way
-      p1_ships = @pw.fleets.select{|fleet| fleet.owner == 1 && fleet.turns_remaining == turn}.inject(0){|ships, fleet| ships + fleet.num_ships}
-      p2_ships = @pw.fleets.select{|fleet| fleet.owner == 2 && fleet.turns_remaining == turn}.inject(0){|ships, fleet| ships + fleet.num_ships}
+      inbound_fleets = @pw.fleets.select{|fleet| fleet.destination_planet == planet_id && fleet.turns_remaining == turn}
+      p1_ships = inbound_fleets.select{|fleet| fleet.owner == 1}.inject(0){|ships, fleet| ships + fleet.num_ships}
+      p2_ships = inbound_fleets.select{|fleet| fleet.owner == 2}.inject(0){|ships, fleet| ships + fleet.num_ships}
+      # log "P1 ships: #{p1_ships}, P2 ships: #{p2_ships}"
 
       # No invaders? Then the planet stays as it is
       return planet if p1_ships == 0 && p2_ships == 0
@@ -131,6 +164,7 @@ class Seer < AI
       if p1_ships > 0 && p2_ships > 0
         # Attackers are the same size, so invasion fails. Neutral keeps the planet.
         if p1_ships == p2_ships
+          log "In #{turn} turns, on planet #{planet_id}, two players invade at the same time: #{p1_ships} && #{p2_ships} vs #{planet.num_ships}. Resetting planet ships to 0."
           planet.num_ships = 0
           return planet
         end
@@ -152,8 +186,8 @@ class Seer < AI
       elsif p1_ships > 0
         if planet.num_ships < p1_ships
           # Invader wins, owns planet
-          planet.owner = 2
-          planet.num_ships = p1_ships - planets.num_ships
+          planet.owner = 1
+          planet.num_ships = p1_ships - planet.num_ships
         else
           # Invader loses
           planet.num_ships -= p1_ships
@@ -162,12 +196,13 @@ class Seer < AI
         if planet.num_ships < p2_ships
           # Invader wins, owns planet
           planet.owner = 2
-          planet.num_ships = p2_ships - planets.num_ships
+          planet.num_ships = p2_ships - planet.num_ships
         else
           # Invader loses
           planet.num_ships -= p2_ships
         end
       end
+      return planet
     else
       # Growth, battles only 2-way
       planet.num_ships += planet.growth_rate
