@@ -307,7 +307,7 @@ class Seer < AI
       end
 
       if helpful_planets.empty?
-        log "There are no helpful planets to help fleet #{fleet.id}, who reaches planet #{fleet.destination_planet} in #{fleet.turns_remaining} turns."
+        log "There are no helpful planets to help our fleet of #{fleet.num_ships} ships, who reaches planet #{fleet.destination_planet} in #{fleet.turns_remaining} turns."
         next
       end
 
