@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 # Bot launcher
 # Syntax:
 #   MyBot.rb <ai_name>
