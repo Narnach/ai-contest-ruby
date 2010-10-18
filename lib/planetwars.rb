@@ -86,6 +86,10 @@ class PlanetWars
   def enemy_fleets
     @fleets.select {|fleet| fleet.owner > 1 }
   end
+  
+  def nearby_planets(target, range)
+    @planets.select {|planet| self.travel_time(target, planet) <= range}.sort_by {|planet| self.travel_time(target, planet)}
+  end
 
   def to_s
     s = []
