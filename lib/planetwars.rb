@@ -80,11 +80,15 @@ class PlanetWars
   end
 
   def nearby_planets(target, range)
-    @planets.select {|planet| self.travel_time(target, planet) <= range}.sort_by {|planet| self.travel_time(target, planet)}
+    (@planets-[target]).select {|planet| self.travel_time(target, planet) <= range}.sort_by {|planet| self.travel_time(target, planet)}
   end
 
   def closest_planets(target)
-    @planets.sort_by {|planet| self.travel_time(target, planet)}
+    (@planets-[target]).sort_by {|planet| self.travel_time(target, planet)}
+  end
+
+  def my_closest_planets(target)
+    (@planets-[target]).select{|planet| planet.mine?}.sort_by {|planet| self.travel_time(target, planet)}
   end
 
   def my_fleets
