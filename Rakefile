@@ -65,7 +65,7 @@ task :tournament do
   turns.times {
     bot1 = bots_pool.shift
     bot2 = bots_pool.rand
-    bots_pool.delete("bot2")
+    bots_pool.delete(bot2)
     bots_pool.push bot1
     bots_pool.push bot2
     map = @maps.rand
@@ -88,11 +88,11 @@ task :tournament do
     when "Player 1 Wins!"
       match[:winner]=bot1
       match[:loser]=bot2
-      puts "Victory by #{bot1}"
+      puts "Victory by %#{@lbns}s (turn %3i)" % [bot1, match_turns]
     when "Player 2 Wins!"
       match[:winner]=bot2
       match[:loser]=bot1
-      puts "Victory by #{bot2}"
+      puts "Victory by %#{@lbns}s (turn %3i)" % [bot2, match_turns]
     else
       puts "This response is unexpected: #{result.inspect}"
       exit 1
@@ -107,6 +107,7 @@ task :tournament do
     wins = bot_matches.select{|match| match[:winner] == bot}.size
     draws = bot_matches.select{|match| match[:winner] == nil}.size
     losses = bot_matches.select{|match| match[:loser] == bot}.size
-    puts "%10s: %i/%i/%i (%i games)" % [bot, wins, draws, losses, plays]
+    win_pct = plays > 0 ? 100.0 * wins / plays : 0
+    puts "%10s: %#{turns.to_s.size}i/%#{turns.to_s.size}i/%#{turns.to_s.size}i (%#{turns.to_s.size}i games, %3i%% wins)" % [bot, wins, draws, losses, plays, win_pct]
   end
 end
