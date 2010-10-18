@@ -56,14 +56,18 @@ class Toolbot < AI
     def can_attack?(source, num_ships)
       @ships_available[source.planet_id] >= num_ships
     end
+    
+    def ships_available_on(source)
+      @ships_available[source.planet_id]
+    end
 
     def attack_with(source, target, num_ships)
       if self.can_attack?(source, num_ships)
-        log "Attacking #{target.planet_id} with #{num_ships} ships from #{source.planet_id}. Distance is #{@pw.travel_time(source, target)}."
+        log "Attacking planet #{target.planet_id} with #{num_ships} ships from planet #{source.planet_id}. Distance is #{@pw.travel_time(source, target)}."
         @ships_available[source.planet_id] -= num_ships
         @pw.issue_order(source.planet_id, target.planet_id, num_ships)
       else
-        log "!!! BUG !!! Wanted to send #{num_ships} from #{source.planet_id} to #{target.planet_id}, while there are only #{@ships_available[source.planet_id]} available!"
+        log "!!! BUG !!! Wanted to send #{num_ships} from #{source.planet_id} to #{target.planet_id}, while there are only #{ships_available_on(source)} available!"
       end
     end
   end
@@ -82,17 +86,14 @@ class Toolbot < AI
 
     def cap_strategy
       @pw.my_planets.each do |source|
-        log "Planet #{source.planet_id} can send #{@ships_available[source.planet_id]} ships out to capture planets"
+        log "Planet #{source.planet_id} can send #{ships_available_on(source)} ships out to capture planets"
         @pw.closest_planets(source).each do |target|
           next if target.mine?
           distance = @pw.travel_time(source, target)
           ships_needed = ships_needed_to_capture(target, distance)
           next if ships_needed <= 0
-          if can_attack?(source, ships_needed)
-            self.attack_with(source, target, ships_needed)
-          else
-            log "Not enough ships to send to #{target.planet_id}. Have #{attack_fleet}, need #{ships_needed}"
-          end
+          next unless can_attack?(source, ships_needed)
+          self.attack_with(source, target, ships_needed)
         end
       end
     end
