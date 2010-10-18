@@ -30,9 +30,11 @@ class AI
 
   def run
     map_data = ''
+    @turn = 0
     loop do
       current_line = gets.strip rescue break
       if current_line.length >= 2 and current_line[0..1] == "go"
+        @turn += 1
         @turn_start = Time.now
         @pw = PlanetWars.new(map_data)
         begin
