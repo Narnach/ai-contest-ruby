@@ -79,6 +79,14 @@ class PlanetWars
     @planets.reject {|planet| planet.owner == 1 }
   end
 
+  def nearby_planets(target, range)
+    @planets.select {|planet| self.travel_time(target, planet) <= range}.sort_by {|planet| self.travel_time(target, planet)}
+  end
+
+  def closest_planets(target)
+    @planets.sort_by {|planet| self.travel_time(target, planet)}
+  end
+
   def my_fleets
     @fleets.select {|fleet| fleet.owner == 1 }
   end
@@ -86,9 +94,9 @@ class PlanetWars
   def enemy_fleets
     @fleets.select {|fleet| fleet.owner > 1 }
   end
-  
-  def nearby_planets(target, range)
-    @planets.select {|planet| self.travel_time(target, planet) <= range}.sort_by {|planet| self.travel_time(target, planet)}
+
+  def fleets_underway_to(target)
+    @fleets.select {|fleet| fleet.destination_planet == target.planet_id}
   end
 
   def to_s

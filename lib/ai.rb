@@ -24,8 +24,10 @@ class AI
     @bots ||= Hash.new
   end
 
-  def do_turn(pw)
-    # todo for actual AIs
+  # Don't forget to start a bot's do_turn with a call to super
+  def do_turn
+    return if @pw.my_planets.length == 0
+    return if @pw.not_my_planets.length == 0
   end
 
   def run
