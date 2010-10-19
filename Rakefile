@@ -51,11 +51,11 @@ task :prezip_tournament do
     when "Player 1 Wins!"
       match[:winner]=bot1
       match[:loser]=bot2
-      puts "Victory by %#{@lbns}s (turn %3i)" % [bot1, match_turns]
+      puts "Victory by %#{lbns}s (turn %3i)" % [bot1, match_turns]
     when "Player 2 Wins!"
       match[:winner]=bot2
       match[:loser]=bot1
-      puts "Victory by %#{@lbns}s (turn %3i)" % [bot2, match_turns]
+      puts "Victory by %#{lbns}s (turn %3i)" % [bot2, match_turns]
     else
       puts "This response is unexpected: #{result.inspect}"
       exit 1
