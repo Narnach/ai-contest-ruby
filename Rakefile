@@ -100,8 +100,8 @@ end
 
 desc 'Create a .zip file with all ruby files'
 task :zip do
-  files = `find . -name '*.rb'`.split("\n").map{|str| str.strip}
-  system "zip", "-9", "narnach.zip", *files
+  files = `find {lib,bots} -name '*.rb'`.split("\n").map{|str| str.strip}
+  system "zip", "-9", "narnach.zip", 'MyBot.rb', *files
 end
 
 desc "Run the current default bot against the TCP server. Requires ./tcp to be compiled"
