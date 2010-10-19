@@ -15,6 +15,66 @@ task :play do
   exec "mate ./last_game.log"
 end
 
+desc 'Play current bot against old bots'
+task :prezip_tournament do
+  bots = Dir.glob("submissions/*/MyBot.rb") + ["./MyBot.rb"]
+  lbns = bots.map{|bot| bot.length}.max
+  turns = (ENV['TURNS'] || bots.size * 5).to_i
+
+  matches = []
+
+  # Use bots_pool to pick the first bot. Each time a bot plays, he is kicked down the ladder. This means that the bot who has played the least drifts upwards
+  bots_pool = bots.shuffle
+  turns.times {
+    bot1 = bots_pool.shift
+    bot2 = bots_pool.rand
+    bots_pool.delete(bot2)
+    bots_pool.push bot1
+    bots_pool.push bot2
+    map = @maps.rand
+
+    print "A matchup of %#{lbns}s vs %#{lbns}s on %#{@lmns}s: " % [bot1, bot2, map]
+    cmd = %Q[java -jar tools/PlayGame.jar #{map} 1000 200 last_game.log "ruby #{bot1}" "ruby #{bot2}" 2>&1]
+    result = `#{cmd}`
+    win_line = result.split("\n").grep(/Draw|Player \d Wins/).first
+    match_turns = result.split("\n").grep(/Turn \d+/).last.match(/\d+/)[0].to_i
+    match = {:p1=>bot1, :p2=>bot2, :map=>map, :match_turns => match_turns}
+    unless win_line
+      puts "This response is unexpected: #{result.inspect}"
+      exit 1
+    end
+    case win_line.strip
+    when "Draw!"
+      match[:winner]=nil
+      match[:loser]=nil
+      puts "Draw"
+    when "Player 1 Wins!"
+      match[:winner]=bot1
+      match[:loser]=bot2
+      puts "Victory by %#{@lbns}s (turn %3i)" % [bot1, match_turns]
+    when "Player 2 Wins!"
+      match[:winner]=bot2
+      match[:loser]=bot1
+      puts "Victory by %#{@lbns}s (turn %3i)" % [bot2, match_turns]
+    else
+      puts "This response is unexpected: #{result.inspect}"
+      exit 1
+    end
+    matches << match
+  }
+
+  # p matches
+  bots.each do |bot|
+    bot_matches = matches.select{|match| match[:p1] == bot or match[:p2] == bot}
+    plays = bot_matches.size
+    wins = bot_matches.select{|match| match[:winner] == bot}.size
+    draws = bot_matches.select{|match| match[:winner] == nil}.size
+    losses = bot_matches.select{|match| match[:loser] == bot}.size
+    win_pct = plays > 0 ? 100.0 * wins / plays : 0
+    puts "%10s: %#{turns.to_s.size}i/%#{turns.to_s.size}i/%#{turns.to_s.size}i (%#{turns.to_s.size}i games, %3i%% wins)" % [bot, wins, draws, losses, plays, win_pct]
+  end
+end
+
 desc "Run with debug flags on. Use env variables MAP, BOT1 and BOT2 to change defaults. Set random to pick a random valid value"
 task :debug do
   ENV['MAP'] = @maps.rand if ENV['MAP']=='random'
