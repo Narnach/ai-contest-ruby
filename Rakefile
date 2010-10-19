@@ -107,7 +107,7 @@ end
 desc "Run the current default bot against the TCP server. Requires ./tcp to be compiled"
 task :tcp do
   bot = ENV['BOT'] || ''
-  unless File.exist?("bots/#{bot}.rb")
+  if bot != '' && !File.exist?("bots/#{bot}.rb")
     puts "Bot #{bot} does not exist"
     exit 1
   end
