@@ -106,13 +106,16 @@ end
 
 desc "Run the current default bot against the TCP server. Requires ./tcp to be compiled"
 task :tcp do
+  player = 'narnach'
+  password = 'nartest123'
   system "gcc tcp.c -o tcp"
   bot = ENV['BOT'] || ''
   if bot != '' && !File.exist?("bots/#{bot}.rb")
     puts "Bot #{bot} does not exist"
     exit 1
   end
-  system "./tcp 72.44.46.68 995 narnach -p nartest123 ./MyBot.rb #{bot}"
+  system "./tcp 72.44.46.68 995 #{player} -p #{password} ./MyBot.rb #{bot}"
+  system %Q[open "http://72.44.46.68/getplayer?player=#{player}"]
 end
 
 desc "Run a tournament of random matchups. Set TURNS to change the turn count it from the number of maps."
