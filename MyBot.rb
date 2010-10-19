@@ -8,8 +8,7 @@ require './lib/ai.rb'
 
 VERBOSE = ARGV.delete('-v')=='-v'
 
-bot = ARGV.shift || "seer"
-# require "./bots/#{bot}.rb"
+bot = ARGV.shift || "toolbot"
 Dir.glob("./bots/*.rb").each do |file|
   require file
 end
