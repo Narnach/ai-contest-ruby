@@ -4,20 +4,61 @@ class Array
   end
 end
 
-@bots = Dir.glob("bots/*.rb").map{|file| File.basename(file).gsub(".rb","")}
-@maps = Dir.glob("maps/*.txt")
-@lbns = @bots.map{|bot| bot.size}.sort.last
-@lmns = @maps.map{|map| map.size}.sort.last
+BOTS = Dir.glob("bots/*.rb").map{|file| "./Mybot.rb #{File.basename(file).gsub(".rb","")}"}
+SUBMISSION_BOTS = Dir.glob("submissions/*/MyBot.rb")
+ALL_BOTS = BOTS + SUBMISSION_BOTS
+MAPS = Dir.glob("maps/*.txt")
+LBNS = BOTS.map{|bot| bot.size}.sort.last
+LMNS = MAPS.map{|map| map.size}.sort.last
+
+class Playgame
+  DEFAULT_OPTIONS = {
+    :timeout=>1000,
+    :turns=>200,
+    :map=>MAPS.first,
+    :bot1=>ALL_BOTS.first,
+    :bot2=>ALL_BOTS.last,
+    :debug=>false,
+    :debug1=>false,
+    :debug2=>false,
+    :visualize=>true,
+    :verbose=>true,
+    :logfile=>"last_game.log",
+    :open_log=>true,
+  }
+  attr_accessor *(DEFAULT_OPTIONS.keys)
+
+  def initialize(options={})
+    final_options = DEFAULT_OPTIONS.merge(options)
+    final_options.each do |k,v|
+      self.send("#{k}=",v)
+    end
+    # Use debug as a flag to override debug1 and debug2, unless they are explicitly set
+    self.debug1=true if self.debug && !options.has_key?(:debug1)
+    self.debug2=true if self.debug && !options.has_key?(:debug2)
+  end
+
+  def cmd
+    %Q[java -jar tools/PlayGame.jar #{map} #{timeout} #{turns} #{logfile} "#{bot1} #{"-v" if debug1}" "#{bot2} #{"-v" if debug2}"#{"| java -jar tools/ShowGame.jar" if visualize}]
+  end
+
+  def run
+    puts cmd if verbose
+    system(cmd)
+    puts "A matchup of '#{bot1}' vs '#{bot2}' on #{map}" if verbose
+    exec "mate #{logfile}" if open_log
+  end
+end
 
 desc 'Play two bots against each other'
 task :play do
-  system %q[java -jar tools/PlayGame.jar maps/map1.txt 1000 200 last_game.log "ruby MyBot.rb" "ruby MyBot.rb speed"| java -jar tools/ShowGame.jar]
-  exec "mate ./last_game.log"
+  game = Playgame.new(:map=>MAPS.rand, :bot1=>"./MyBot.rb", :bot2=>SUBMISSION_BOTS.rand||ALL_BOTS.rand)
+  game.run
 end
 
 desc 'Play current bot against old bots'
 task :prezip_tournament do
-  bots = Dir.glob("submissions/*/MyBot.rb") + ["./MyBot.rb"]
+  bots = SUBMISSION_BOTS + ["./MyBot.rb"]
   lbns = bots.map{|bot| bot.length}.max
   turns = (ENV['TURNS'] || bots.size * 5).to_i
 
@@ -31,9 +72,9 @@ task :prezip_tournament do
     bots_pool.delete(bot2)
     bots_pool.push bot1
     bots_pool.push bot2
-    map = @maps.rand
+    map = MAPS.rand
 
-    print "A matchup of %#{lbns}s vs %#{lbns}s on %#{@lmns}s: " % [bot1, bot2, map]
+    print "A matchup of %#{lbns}s vs %#{lbns}s on %#{LMNS}s: " % [bot1, bot2, map]
     cmd = %Q[java -jar tools/PlayGame.jar #{map} 1000 200 last_game.log "ruby #{bot1}" "ruby #{bot2}" 2>&1]
     result = `#{cmd}`
     win_line = result.split("\n").grep(/Draw|Player \d Wins/).first
@@ -77,25 +118,8 @@ end
 
 desc "Run with debug flags on. Use env variables MAP, BOT1 and BOT2 to change defaults. Set random to pick a random valid value"
 task :debug do
-  ENV['MAP'] = @maps.rand if ENV['MAP']=='random'
-  map = ENV['MAP'] || 'maps/map1.txt'
-
-  ENV['BOT1'] = @bots.rand if ENV['BOT1']=="random"
-  bot = ENV['BOT1'] || 'seer'
-
-  ENV['BOT2'] = @bots.rand if ENV['BOT2']=="random"
-  bot2 = ENV['BOT2'] || 'toolbot'
-
-  if ENV["RAW"].nil?
-    output = "| java -jar tools/ShowGame.jar"
-  else
-    output = ""
-  end
-
-  puts "A matchup of #{bot} vs #{bot2} on #{map}"
-  system %Q[java -jar tools/PlayGame.jar #{map} 3000 200 last_game.log "ruby MyBot.rb -v #{bot}" "ruby MyBot.rb -v #{bot2}"#{output}]
-  puts "A matchup of #{bot} vs #{bot2} on #{map}"
-  exec "mate ./last_game.log"
+  game = Playgame.new(:map=>ENV['MAP']||MAPS.rand, :bot1=>ENV['BOT1']||ALL_BOTS.rand, :bot2=>ENV['BOT2']||ALL_BOTS.rand, :visualize=>ENV['RAW'].nil?, :debug=>true)
+  game.run
 end
 
 desc 'Create a .zip file with all ruby files'
@@ -120,21 +144,21 @@ end
 
 desc "Run a tournament of random matchups. Set TURNS to change the turn count it from the number of maps."
 task :tournament do
-  turns = (ENV['TURNS'] || @maps.size).to_i
+  turns = (ENV['TURNS'] || MAPS.size).to_i
 
   matches = []
 
   # Use bots_pool to pick the first bot. Each time a bot plays, he is kicked down the ladder. This means that the bot who has played the least drifts upwards
-  bots_pool = @bots.shuffle
+  bots_pool = BOTS.shuffle
   turns.times {
     bot1 = bots_pool.shift
     bot2 = bots_pool.rand
     bots_pool.delete(bot2)
     bots_pool.push bot1
     bots_pool.push bot2
-    map = @maps.rand
+    map = MAPS.rand
 
-    print "A matchup of %#{@lbns}s vs %#{@lbns}s on %#{@lmns}s: " % [bot1, bot2, map]
+    print "A matchup of %#{LBNS}s vs %#{LBNS}s on %#{LMNS}s: " % [bot1, bot2, map]
     cmd = %Q[java -jar tools/PlayGame.jar #{map} 1000 200 last_game.log "ruby MyBot.rb #{bot1}" "ruby MyBot.rb #{bot2}" 2>&1]
     result = `#{cmd}`
     win_line = result.split("\n").grep(/Draw|Player \d Wins/).first
@@ -152,11 +176,11 @@ task :tournament do
     when "Player 1 Wins!"
       match[:winner]=bot1
       match[:loser]=bot2
-      puts "Victory by %#{@lbns}s (turn %3i)" % [bot1, match_turns]
+      puts "Victory by %#{LBNS}s (turn %3i)" % [bot1, match_turns]
     when "Player 2 Wins!"
       match[:winner]=bot2
       match[:loser]=bot1
-      puts "Victory by %#{@lbns}s (turn %3i)" % [bot2, match_turns]
+      puts "Victory by %#{LBNS}s (turn %3i)" % [bot2, match_turns]
     else
       puts "This response is unexpected: #{result.inspect}"
       exit 1
@@ -165,7 +189,7 @@ task :tournament do
   }
 
   # p matches
-  @bots.each do |bot|
+  BOTS.each do |bot|
     bot_matches = matches.select{|match| match[:p1] == bot or match[:p2] == bot}
     plays = bot_matches.size
     wins = bot_matches.select{|match| match[:winner] == bot}.size
