@@ -6,7 +6,8 @@ class Seer < AI
   # v2: Naieve claim strategy pays attention to fleets and growth
   # v3: Strikeforce calculations help in finding targets
   # v4: Multiple reactive strategies are implemented. Speed bot still wins 100%, though.
-  version 4
+  # v5: Fix variable shadowing bug to not attack from non-owned planets
+  version 5
 
   LOOK_AHEAD=10
   PROXIMITY = 5
@@ -46,7 +47,7 @@ class Seer < AI
     # Old Speed bot behaviour, will eventually be dropped once all logic has been redone.
     @pw.my_planets.each do |planet|
       # From the closest 5 planets, pick the one with the best tradeoff between defending ships and growth rate
-      @pw.not_my_planets.sort_by {|p| @pw.distance(planet, p)}[0...PROXIMITY].select{|planet| strikeforce_for(planet.planet_id) > 0}.sort_by {|p| (p.growth_rate * PLANET_TURN_ESTIMATE) - p.num_ships}.reverse.each do |target|
+      @pw.not_my_planets.sort_by {|p| @pw.distance(planet, p)}[0...PROXIMITY].select{|p| strikeforce_for(p.planet_id) > 0}.sort_by {|p| (p.growth_rate * PLANET_TURN_ESTIMATE) - p.num_ships}.reverse.each do |target|
         return log('almost out of time') if time_left < 0.1
         strikeforce = strikeforce_for(planet.planet_id)
         if strikeforce == 0
