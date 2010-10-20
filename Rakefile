@@ -140,7 +140,7 @@ class Tournament
       if match[:winner]
         puts "Game %#{turns.to_s.size}i: Victory by %#{lbns}s against %#{lbns}s on %#{lmns}s (turn %3i)" % [turn, match[:winner].name, match[:loser].name, map, match[:turns]]
       else
-        puts "Game %#{turns.to_s.size}i: A draw for %#{lbns}s against %#{lbns}s on %#{lmns}s" % [bot1.name, bot2.name, map]
+        puts "Game %#{turns.to_s.size}i: A draw for %#{lbns}s against %#{lbns}s on %#{lmns}s" % [turn, bot1.name, bot2.name, map]
       end
       matches << match
     }
@@ -229,7 +229,7 @@ task :tcp do
     exit 1
   end
   debug = ENV['DEBUG'] ? " -v " : ""
-  system "./tcp 72.44.46.68 995 #{player} -p #{password} ./MyBot.rb #{bot} #{debug}"
+  system "./tcp 72.44.46.68 995 #{player} -p #{password} ./MyBot.rb #{bot} #{debug} --stderr"
   system %Q[open "http://72.44.46.68/getplayer?player=#{player}"]
 end
 

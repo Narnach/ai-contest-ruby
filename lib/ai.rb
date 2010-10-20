@@ -1,8 +1,9 @@
 class AI
-  attr_accessor :logging
+  attr_accessor :logging, :log_stream
 
   def initialize
     @turn_start=Time.now
+    @log_stream = $stdout
   end
 
   def self.version(version=nil)
@@ -62,7 +63,7 @@ class AI
   end
 
   def log(msg)
-    $stderr.puts "# (left: %8.06f) %s" % [time_left, msg] if self.logging
+    @log_stream.puts "# (left: %8.06f) %s" % [time_left, msg] if self.logging
   end
 
   def log_state

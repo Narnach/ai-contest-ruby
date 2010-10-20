@@ -7,6 +7,7 @@ require './lib/planetwars.rb'
 require './lib/ai.rb'
 
 VERBOSE = ARGV.delete('-v')=='-v'
+STDERR = ARGV.delete('--stderr')=="--stderr"
 
 bot = ARGV.shift || "toolbot"
 Dir.glob("./bots/*.rb").each do |file|
@@ -16,4 +17,5 @@ end
 ai_class = AI.find(bot)
 bot = ai_class.new
 bot.logging = VERBOSE
+bot.log_stream = $stderr if STDERR
 bot.run
