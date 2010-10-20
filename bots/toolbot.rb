@@ -1,6 +1,9 @@
 # Toolbot has a collection of simple strategies it can execute. It cycles through them in order.
 class Toolbot < AI
   bot 'toolbot'
+  # v1: Experimental, one-strategy bot
+  # v2: Pick different strategies depending on who has advantage
+  version 2
 
   def initialize
     super
@@ -15,6 +18,7 @@ class Toolbot < AI
       log "We have more ships and growth, so go for all-out attack"
       cap_strategy
       omni_cap_strategy
+      reinforce_strategy
     elsif @my_population > @enemy_population
       log "We have more ships on our planets than they have, so attack them first"
       reinforce_strategy
