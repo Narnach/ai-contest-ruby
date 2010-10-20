@@ -58,7 +58,7 @@ class Playgame
   end
 
   def cmd
-    %Q[java -jar tools/PlayGame.jar #{map} #{timeout} #{turns} #{logfile} "ruby #{bot1} #{"-v" if debug1}" "ruby #{bot2} #{"-v" if debug2}"#{"| java -jar tools/ShowGame.jar" if visualize}#{" 2>&1" if self.raw_output}]
+    %Q[java -jar tools/PlayGame.jar #{map} #{timeout} #{turns} #{logfile} "ruby -I #{File.dirname(bot1)} #{bot1} #{"-v" if debug1}" "ruby -I #{File.dirname(bot2)} #{bot2} #{"-v" if debug2}"#{"| java -jar tools/ShowGame.jar" if visualize}#{" 2>&1" if self.raw_output}]
   end
 
   def run
