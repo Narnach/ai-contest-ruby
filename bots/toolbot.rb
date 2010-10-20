@@ -222,7 +222,7 @@ class Toolbot < AI
         sums_of_distances[planet.planet_id]=distance_factor
 
         grow_factor = planet.growth_rate * 100
-        ship_factor = 1.0 * (all_my_ships - planet.num_ships) / all_my_ships
+        ship_factor = all_my_ships > 0 ? 1.0 * (all_my_ships - planet.num_ships) / all_my_ships : 0
         ship_factor = 0 if ship_factor < 0
         score = ((distance_factor + grow_factor) * ship_factor).to_i
         scores[planet.planet_id] = score
@@ -241,6 +241,7 @@ class Toolbot < AI
           next if ships_needed >= all_my_ships
           ships_to_send = [available, ships_needed].min
           all_my_ships -= ships_to_send
+          next if ships_to_send <= 0
           self.attack_with(planet, target, ships_to_send)
         end
       end
@@ -258,6 +259,7 @@ class Toolbot < AI
         @pw.my_closest_planets(planet).each do |helping_planet|
           break if ships_to_send <= 0
           helping_ships = [ships_available_on(helping_planet), ships_to_send].min
+          next if helping_ships <= 0
           self.attack_with(helping_planet, planet, helping_ships)
           ships_to_send -= helping_ships
         end
