@@ -177,7 +177,7 @@ task :prezip_tournament do
     exit 1
   end
   maps = MAPS
-  turns = (ENV['TURNS'] || bots.size * 5).to_i
+  turns = (ENV['TURNS'] || bots.size * 10).to_i
 
   tournament = Tournament.new(bots, maps, turns, :bot1=>"./MyBot.rb")
   tournament.play
