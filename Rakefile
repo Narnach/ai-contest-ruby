@@ -196,6 +196,22 @@ task :zip do
   system "zip", "-9", "narnach.zip", 'MyBot.rb', *files
 end
 
+desc "Tag this git commit with the latest tag"
+task :tag do
+  previous_tag = `git tag -l`.split("\n").map{|tag| tag.strip}.sort.last
+  new_tag = "v#{previous_tag.gsub(/\D+/,"").to_i + 1}"
+  puts new_tag
+  system "git tag -a #{new_tag} -m #{new_tag}"
+end
+
+desc "Release!"
+task :release => [:prezip_tournament] do
+  puts "The tournament has played. Are you happy with the results and are you ready to ship?\nPress ENTER to continue or Ctrl-C to stop."
+  $stdin.gets
+  Rake::Task['zip'].invoke
+  Rake::Task['tag'].invoke
+end
+
 desc "Run the current default bot against the TCP server. Requires ./tcp to be compiled"
 task :tcp do
   player = 'narnach'
