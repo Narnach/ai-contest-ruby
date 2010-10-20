@@ -44,12 +44,14 @@ class Playgame
     final_options.each do |k,v|
       self.send("#{k}=",v)
     end
+    self.bot1 = "./Mybot.rb #{self.bot1}" unless File.exist?(self.bot1)
+    self.bot2 = "./Mybot.rb #{self.bot2}" unless File.exist?(self.bot2)
     # Use debug as a flag to override debug1 and debug2, unless they are explicitly set
     self.debug1=true if self.debug && !options.has_key?(:debug1)
     self.debug2=true if self.debug && !options.has_key?(:debug2)
     self.raw_output=true if self.analyze
     self.visualize = false if self.raw_output
-    self.open_log=false
+    self.open_log=false if self.analyze
   end
 
   def cmd
@@ -172,7 +174,7 @@ end
 
 desc "Run with debug flags on. Use env variables MAP, BOT1 and BOT2 to change defaults. Set random to pick a random valid value"
 task :debug do
-  game = Playgame.new(:map=>ENV['MAP']||MAPS.rand, :bot1=>ENV['BOT1']||ALL_BOTS.rand, :bot2=>ENV['BOT2']||ALL_BOTS.rand, :visualize=>ENV['RAW'].nil?, :debug=>true)
+  game = Playgame.new(:map=>ENV['MAP']||MAPS.rand, :bot1=>ENV['BOT1']||ALL_BOTS.rand, :bot2=>ENV['BOT2']||ALL_BOTS.rand, :visualize=>ENV['RAW'].nil?, :debug=>true, :verbose=>true)
   game.run
 end
 
