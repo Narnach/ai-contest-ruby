@@ -211,11 +211,6 @@ class Toolbot < AI
     PROXIMITY = 5
     TOP_X = 5
 
-    def do_work
-      super
-      self.assign_defenders_to_my_planets
-    end
-
     def omni_cap_strategy
       all_my_ships = @pw.my_planets.inject(0) {|ships, planet| ships_available_on(planet) + ships}
       scores = Hash.new { |hash, key| hash[key] = 0 }
