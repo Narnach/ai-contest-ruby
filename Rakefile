@@ -1,3 +1,5 @@
+require 'fileutils'
+
 class Array
   def rand
     self[Kernel.rand(self.size)]
@@ -207,4 +209,16 @@ task :tournament do
   tournament = Tournament.new(bots, maps, turns)
   tournament.play
   tournament.display_stats
+end
+
+desc 'Prepare submissions directory'
+task :submissions do
+  system "rm -rf submissions"
+  tags = `git tag -l`.split("\n").map{|tag| tag.strip}
+  tags.each do |tag|
+    dir = "submissions/#{tag}"
+    FileUtils.mkdir_p(dir)
+    system "git checkout v1 && rake zip && unzip narnach.zip -d #{dir}/ && rm narnach.zip"
+  end
+  system "git checkout master"
 end
