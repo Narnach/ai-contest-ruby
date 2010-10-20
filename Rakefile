@@ -57,7 +57,7 @@ class Playgame
   end
 
   def cmd
-    %Q[java -jar tools/PlayGame.jar #{map} #{timeout} #{turns} #{logfile} "#{bot1} #{"-v" if debug1}" "#{bot2} #{"-v" if debug2}"#{"| java -jar tools/ShowGame.jar" if visualize}#{" 2>&1" if self.raw_output}]
+    %Q[java -jar tools/PlayGame.jar #{map} #{timeout} #{turns} #{logfile} "ruby #{bot1} #{"-v" if debug1}" "ruby #{bot2} #{"-v" if debug2}"#{"| java -jar tools/ShowGame.jar" if visualize}#{" 2>&1" if self.raw_output}]
   end
 
   def run
@@ -101,24 +101,30 @@ end
 
 class Tournament
   # External data
-  attr_reader :bots, :turns, :maps
+  attr_reader :bots, :turns, :maps, :options
   # Internal data
   attr_reader :matches, :lbns, :lmns
 
-  def initialize(bots, maps, turns)
+  def initialize(bots, maps, turns, options={})
     @bots = bots
     @maps = maps
     @turns = turns
     @matches = []
     @lbns = bots.map{|bot| bot.name.length}.max
     @lmns = maps.map{|map| map.length}.max
+    @options=options
   end
 
   def play
     # Use bots_pool to pick the first bot. Each time a bot plays, he is kicked down the ladder. This means that the bot who has played the least drifts upwards
     bots_pool = bots.shuffle
     turns.times {
-      bot1 = bots_pool.shift
+      if options[:bot1]
+        bot1 = options[:bot1]
+        bots_pool.delete(bot1)
+      else
+        bot1 = bots_pool.shift
+      end
       bot2 = bots_pool.rand
       bots_pool.delete(bot2)
       bots_pool.push bot1
@@ -165,11 +171,15 @@ end
 
 desc 'Play current bot against old bots'
 task :prezip_tournament do
-  bots = SUBMISSION_BOTS + ["./MyBot.rb"]
+  bots = SUBMISSION_BOTS
+  if bots.size == 0
+    puts "No bots found. Please run 'rake submissions'. This will reset your git branch a couple of times, so commit your changes first."
+    exit 1
+  end
   maps = MAPS
   turns = (ENV['TURNS'] || bots.size * 5).to_i
 
-  tournament = Tournament.new(bots, maps, turns)
+  tournament = Tournament.new(bots, maps, turns, :bot1=>"./MyBot.rb")
   tournament.play
   tournament.display_stats
 end
