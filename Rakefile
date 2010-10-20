@@ -50,6 +50,7 @@ class Playgame
     self.bot1 = "./Mybot.rb #{self.bot1}" unless File.exist?(self.bot1)
     self.bot2 = "./Mybot.rb #{self.bot2}" unless File.exist?(self.bot2)
     # Use debug as a flag to override debug1 and debug2, unless they are explicitly set
+    self.debug=true if ENV['DEBUG']=='true'
     self.debug1=true if self.debug && !options.has_key?(:debug1)
     self.debug2=true if self.debug && !options.has_key?(:debug2)
     self.raw_output=true if self.analyze
@@ -119,7 +120,8 @@ class Tournament
   def play
     # Use bots_pool to pick the first bot. Each time a bot plays, he is kicked down the ladder. This means that the bot who has played the least drifts upwards
     bots_pool = bots.shuffle
-    turns.times {
+    turns.times { |n|
+      turn = n+1
       if options[:bot1]
         bot1 = options[:bot1]
         bots_pool.delete(bot1)
@@ -132,13 +134,13 @@ class Tournament
       bots_pool.push bot2
       map = maps.rand
 
-      game = Playgame.new(:map=>map, :bot1=>bot1, :bot2=>bot2, :debug=>false, :raw_output=>true, :verbose=>false, :analyze=>true)
+      game = Playgame.new(:map=>map, :bot1=>bot1, :bot2=>bot2, :debug=>false, :raw_output=>true, :verbose=>false, :analyze=>true, :logfile=>"tournament_game_#{turn}.log")
       match = game.run
 
       if match[:winner]
-        puts "Victory by %#{lbns}s against %#{lbns}s on %#{lmns}s (turn %3i)" % [match[:winner].name, match[:loser].name, map, match[:turns]]
+        puts "Game %#{turns.to_s.size}i: Victory by %#{lbns}s against %#{lbns}s on %#{lmns}s (turn %3i)" % [turn, match[:winner].name, match[:loser].name, map, match[:turns]]
       else
-        puts "A draw for %#{lbns}s against %#{lbns}s on %#{lmns}s" % [bot1.name, bot2.name, map]
+        puts "Game %#{turns.to_s.size}i: A draw for %#{lbns}s against %#{lbns}s on %#{lmns}s" % [bot1.name, bot2.name, map]
       end
       matches << match
     }
@@ -226,7 +228,8 @@ task :tcp do
     puts "Bot #{bot} does not exist"
     exit 1
   end
-  system "./tcp 72.44.46.68 995 #{player} -p #{password} ./MyBot.rb #{bot}"
+  debug = ENV['DEBUG'] ? " -v " : ""
+  system "./tcp 72.44.46.68 995 #{player} -p #{password} ./MyBot.rb #{bot} #{debug}"
   system %Q[open "http://72.44.46.68/getplayer?player=#{player}"]
 end
 
