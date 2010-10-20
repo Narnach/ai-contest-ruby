@@ -21,6 +21,7 @@ ALL_BOTS = BOTS + SUBMISSION_BOTS
 MAPS = Dir.glob("maps/*.txt")
 LBNS = BOTS.map{|bot| bot.size}.sort.last
 LMNS = MAPS.map{|map| map.size}.sort.last
+TAGS = `git tag -l`.split("\n").map{|tag| tag.strip}
 
 class Playgame
   DEFAULT_OPTIONS = {
@@ -240,14 +241,15 @@ task :tournament do
   tournament.display_stats
 end
 
-desc 'Prepare submissions directory'
-task :submissions do
-  system "rm -rf submissions"
-  tags = `git tag -l`.split("\n").map{|tag| tag.strip}
-  tags.each do |tag|
-    dir = "submissions/#{tag}"
+TAGS.each do |tag|
+  dir = "submissions/#{tag}"
+  file "#{dir}/MyBot.rb" do
     FileUtils.mkdir_p(dir)
-    system "git checkout v1 && rake zip && unzip narnach.zip -d #{dir}/ && rm narnach.zip"
+    system "git checkout #{tag} && rake zip && unzip narnach.zip -x 'submissions/*' -d #{dir}/ && rm narnach.zip"
   end
+end
+
+desc 'Prepare submissions directory'
+task :submissions => TAGS.map{|tag| "submissions/#{tag}/MyBot.rb"} do
   system "git checkout master"
 end
