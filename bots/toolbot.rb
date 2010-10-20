@@ -246,4 +246,14 @@ class Toolbot < AI
     end
   end
   include ReinforceStrategy
+  
+  module HunterStrategy
+    # All destinations of enemy fleets get N+1 extra inbound ships
+    # * Neutral planet targets are delayed by 1 turn to snipe
+    # * Enemy planet targets we can over-shoot by defending fleet size + growth factor
+    # * Friendly planet targets we only have to match them.
+    def hunter_strategy
+    end
+  end
+  include HunterStrategy
 end
