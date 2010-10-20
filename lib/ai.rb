@@ -62,7 +62,7 @@ class AI
   end
 
   def log(msg)
-    puts "# (left: %8.06f) %s" % [time_left, msg] if self.logging
+    $stderr.puts "# (left: %8.06f) %s" % [time_left, msg] if self.logging
   end
 
   def log_state
