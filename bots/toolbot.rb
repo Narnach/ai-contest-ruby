@@ -58,15 +58,29 @@ class Toolbot < AI
 
     def predict_future_population(target, turns)
       predictions = [target.clone]
+      inbound_fleets = @pw.fleets_underway_to(target) + @fleets_dispatched[target.planet_id]
       1.upto(turns) do |n|
         last_turn = predictions[n-1]
         planet = last_turn.clone
         planet.num_ships += planet.growth_rate unless planet.neutral?
 
-        fleets = @pw.fleets_underway_to(planet).select{|fleet| fleet.turns_remaining == n} + @fleets_dispatched[planet.planet_id]
+        fleets = inbound_fleets.select{|fleet| fleet.turns_remaining == n}
         unless fleets.size == 0
           if planet.neutral?
-            # 3-way battle?
+            defenders = planet.num_ships
+            my_attackers = fleets.select{|fleet| fleet.mine?}.inject(0){|ships, fleet| fleet.num_ships + ships}
+            enemy_attackers = fleets.select{|fleet| fleet.enemy?}.inject(0){|ships, fleet| fleet.num_ships + ships}
+            if defenders > my_attackers && defenders > enemy_attackers
+              planet.num_ships = defenders - [my_attackers, enemy_attackers].max
+            elsif my_attackers > defenders && my_attackers > enemy_attackers
+              planet.owner = 1
+              planet.num_ships = my_attackers - [defenders, enemy_attackers].max
+            elsif enemy_attackers > defenders && enemy_attackers > my_attackers
+              planet.owner = 2
+              planet.num_ships = enemy_attackers - [defenders, my_attackers].max
+            elsif my_attackers == enemy_attackers
+              planet.num_ships = defenders - [defenders, my_attackers].min
+            end
           elsif planet.mine?
             defenders = planet.num_ships + fleets.select{|fleet| fleet.mine?}.inject(0){|ships, fleet| fleet.num_ships + ships}
             attackers = fleets.select{|fleet| fleet.enemy?}.inject(0){|ships, fleet| fleet.num_ships + ships}
