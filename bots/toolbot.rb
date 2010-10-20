@@ -21,7 +21,7 @@ class Toolbot < AI
       cap_strategy
       omni_cap_strategy
     else
-      log "We have less ships, so focus on targets of opportunity"
+      log "We do not have an advantage, so play conservative"
       reinforce_strategy
       omni_cap_strategy
     end
@@ -41,7 +41,7 @@ class Toolbot < AI
       end
     end
 
-    def ships_needed_to_capture(target, turns)
+    def ships_needed_to_capture(target, turns=nil)
       predictions = predict_future_population(target, turns)
       predictions.inject(0) do |ships, planet|
         if planet.mine?
@@ -56,9 +56,10 @@ class Toolbot < AI
       end
     end
 
-    def predict_future_population(target, turns)
+    def predict_future_population(target, turns=nil)
       predictions = [target.clone]
       inbound_fleets = @pw.fleets_underway_to(target) + @fleets_dispatched[target.planet_id]
+      turns ||= inbound_fleets.map(&:turns_remaining).max || 0
       1.upto(turns) do |n|
         last_turn = predictions[n-1]
         planet = last_turn.clone
@@ -104,11 +105,6 @@ class Toolbot < AI
         predictions << planet
       end
       predictions
-    end
-
-    # Positive is me, negative is enemy
-    def net_ships_underway_to(target)
-      @pw.fleets_underway_to(target).inject(0) {|ships, fleet| fleet.mine? ? ships + fleet.num_ships : ships - fleet.num_ships}
     end
   end
   include Toolbox
@@ -160,18 +156,6 @@ class Toolbot < AI
 
     def ships_for_defense_of(planet)
       @defenders[planet.planet_id] + ships_available_on(planet)
-    end
-
-    def assign_defenders_to_my_planets
-      @pw.my_planets.each do |planet|
-        reserves = planet.growth_rate * RESERVE_FACTOR
-        ships=net_ships_underway_to(planet)
-        if ships < 0
-          invaders = ships.abs
-          reserves += invaders
-        end
-        assign_defenders(planet, [ships.abs, reserves].min)
-      end
     end
 
     def attack_with(source, target, num_ships)
@@ -261,38 +245,17 @@ class Toolbot < AI
   include OmniCapStrategy
 
   module ReinforceStrategy
-    def do_work
-      super
-      self.assign_defenders_to_my_planets
-    end
-
     # Check for threats to our planets and reinforce them.
     def reinforce_strategy
       @pw.my_planets.each do |planet|
-        ships=net_ships_underway_to(planet)
-        next unless ships < 0
-        invaders = ships.abs
-        available = ships_for_defense_of(planet)
-        next if available > invaders
-        assistance_required = invaders - available
-        log "Planet #{planet.planet_id} requires #{assistance_required} ships in assistance to fend off #{invaders} invaders. It has only #{available} ships available."
+        ships_to_send = ships_needed_to_capture(planet)
+        next if ships_to_send <= 0
+        log "Planet #{planet.planet_id} needs the help of #{ships_to_send} ships to not fall into enemy hands."
         @pw.my_closest_planets(planet).each do |helping_planet|
-          break if assistance_required <= 0
-          next if ships_available_on(helping_planet) <= 0
-
-          distance = @pw.travel_time(helping_planet, planet)
-          if distance <= 1
-            # We can reinforce the planet before any battle occurs
-            ships_to_send = [ships_available_on(helping_planet), assistance_required].min
-            self.attack_with(helping_planet, planet, ships_to_send)
-            assistance_required -= ships_to_send
-          else
-            # Assume our planet will be conquered next turn and we have to take it back by force
-            growth_bonus = (planet.growth_rate * distance) + 1
-            ships_to_send = [ships_available_on(helping_planet), assistance_required + growth_bonus].min
-            self.attack_with(helping_planet, planet, ships_to_send)
-            assistance_required -= [(ships_to_send - growth_bonus), 0].max
-          end
+          break if ships_to_send <= 0
+          helping_ships = [ships_available_on(helping_planet), ships_to_send].min
+          self.attack_with(helping_planet, planet, helping_ships)
+          ships_to_send -= helping_ships
         end
       end
     end
