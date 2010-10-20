@@ -151,14 +151,17 @@ class Tournament
 
   def tournament_stats(matches)
     bots = matches.map {|match| [match[:winner], match[:loser]]}.flatten.compact.uniq.sort
-    bots.each do |bot|
+    match_stats = bots.map do |bot|
       bot_matches = matches.select{|match| match[:p1] == bot or match[:p2] == bot}
       plays = bot_matches.size
       wins = bot_matches.select{|match| match[:winner] == bot}.size
       draws = bot_matches.select{|match| match[:winner] == nil}.size
       losses = bot_matches.select{|match| match[:loser] == bot}.size
       win_pct = plays > 0 ? 100.0 * wins / plays : 0
-      puts "%#{lbns}s: %#{turns.to_s.size}i/%#{turns.to_s.size}i/%#{turns.to_s.size}i (%#{turns.to_s.size}i games, %3i%% wins)" % [bot.name, wins, draws, losses, plays, win_pct]
+      next [bot.name, wins, draws, losses, plays, win_pct]
+    end
+    match_stats.sort_by {|bot_match| 100-bot_match.last}.each do |stats|
+      puts "%#{lbns}s: %#{turns.to_s.size}i/%#{turns.to_s.size}i/%#{turns.to_s.size}i (%#{turns.to_s.size}i games, %3i%% wins)" % stats
     end
   end
 end
