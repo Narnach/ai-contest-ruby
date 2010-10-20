@@ -42,11 +42,54 @@ class Toolbot < AI
     end
 
     def ships_needed_to_capture(target, turns)
-      needed = target.num_ships + 1
-      needed += (turns * target.growth_rate) unless target.neutral?
-      needed -= net_ships_underway_to(target)
-      needed -= @fleets_dispatched[target.planet_id].inject(0){|num_ships, fleet| num_ships + fleet.num_ships}
-      needed
+      predictions = predict_future_population(target, turns)
+      predictions.inject(0) do |ships, planet|
+        if planet.mine?
+          next 0
+        else
+          if ships > (planet.num_ships + 1)
+            next ships
+          else
+            next planet.num_ships + 1
+          end
+        end
+      end
+    end
+
+    def predict_future_population(target, turns)
+      predictions = [target.clone]
+      1.upto(turns) do |n|
+        last_turn = predictions[n-1]
+        planet = last_turn.clone
+        planet.num_ships += planet.growth_rate unless planet.neutral?
+
+        fleets = @pw.fleets_underway_to(planet).select{|fleet| fleet.turns_remaining == n} + @fleets_dispatched[planet.planet_id]
+        unless fleets.size == 0
+          if planet.neutral?
+            # 3-way battle?
+          elsif planet.mine?
+            defenders = planet.num_ships + fleets.select{|fleet| fleet.mine?}.inject(0){|ships, fleet| fleet.num_ships + ships}
+            attackers = fleets.select{|fleet| fleet.enemy?}.inject(0){|ships, fleet| fleet.num_ships + ships}
+            if attackers > defenders
+              planet.owner = 2
+              planet.num_ships = attackers - defenders
+            else
+              planet.num_ships = defenders - attackers
+            end
+          else
+            defenders = planet.num_ships + fleets.select{|fleet| fleet.enemy?}.inject(0){|ships, fleet| fleet.num_ships + ships}
+            attackers = fleets.select{|fleet| fleet.mine?}.inject(0){|ships, fleet| fleet.num_ships + ships}
+            if attackers > defenders
+              planet.owner = 1
+              planet.num_ships = attackers - defenders
+            else
+              planet.num_ships = defenders - attackers
+            end
+          end
+        end
+        predictions << planet
+      end
+      predictions
     end
 
     # Positive is me, negative is enemy
@@ -134,7 +177,7 @@ class Toolbot < AI
   module CapStrategy
     MAX_CAP_PLANETS = 3
     MAX_SUPPORT_PLANETS = 3
-    
+
     def cap_strategy
       @pw.enemy_planets.sort_by{|planet| planet.num_ships}[0...MAX_CAP_PLANETS].each do |target|
         @pw.my_closest_planets(target)[0...MAX_SUPPORT_PLANETS].each do |source|
@@ -246,7 +289,7 @@ class Toolbot < AI
     end
   end
   include ReinforceStrategy
-  
+
   module HunterStrategy
     # All destinations of enemy fleets get N+1 extra inbound ships
     # * Neutral planet targets are delayed by 1 turn to snipe
