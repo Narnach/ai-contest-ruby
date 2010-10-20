@@ -25,6 +25,7 @@ class Playgame
     :verbose=>true,
     :logfile=>"last_game.log",
     :open_log=>true,
+    :raw_output=>false,
   }
   attr_accessor *(DEFAULT_OPTIONS.keys)
 
@@ -36,6 +37,8 @@ class Playgame
     # Use debug as a flag to override debug1 and debug2, unless they are explicitly set
     self.debug1=true if self.debug && !options.has_key?(:debug1)
     self.debug2=true if self.debug && !options.has_key?(:debug2)
+    self.visualize = false if self.raw_output
+    self.open_log=false if self.raw_output
   end
 
   def cmd
@@ -44,9 +47,13 @@ class Playgame
 
   def run
     puts cmd if verbose
-    system(cmd)
-    puts "A matchup of '#{bot1}' vs '#{bot2}' on #{map}" if verbose
-    exec "mate #{logfile}" if open_log
+    if self.raw_output
+      `#{cmd}`
+    else
+      system(cmd)
+      puts "A matchup of '#{bot1}' vs '#{bot2}' on #{map}" if verbose
+      exec "mate #{logfile}" if open_log
+    end
   end
 end
 
@@ -73,6 +80,10 @@ task :prezip_tournament do
     bots_pool.push bot1
     bots_pool.push bot2
     map = MAPS.rand
+
+    game = Playgame.new(:map=>MAPS.rand, :bot1=>bot1, :bot2=>bot2, :debug=>false, :raw_output=>true, :verbose=>false)
+    game.run
+    result = game.raw_output
 
     print "A matchup of %#{lbns}s vs %#{lbns}s on %#{LMNS}s: " % [bot1, bot2, map]
     cmd = %Q[java -jar tools/PlayGame.jar #{map} 1000 200 last_game.log "ruby #{bot1}" "ruby #{bot2}" 2>&1]
