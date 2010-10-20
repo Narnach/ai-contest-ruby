@@ -15,7 +15,7 @@ class String
   end
 end
 
-BOTS = Dir.glob("bots/*.rb").map{|file| "./Mybot.rb #{File.basename(file).gsub(".rb","")}"}
+BOTS = Dir.glob("bots/*.rb").map{|file| File.basename(file).gsub(".rb","")}
 SUBMISSION_BOTS = Dir.glob("submissions/*/MyBot.rb")
 ALL_BOTS = BOTS + SUBMISSION_BOTS
 MAPS = Dir.glob("maps/*.txt")
