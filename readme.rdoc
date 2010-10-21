@@ -18,3 +18,16 @@ Based on this, projections can be made:
 
 Targets of opportunity can be found:
 * (Nearby) neutral planets with inbound enemy ships, what is the planet's population in the next 1/2/3/4/5 turns? How many ships are en-route, so what is the biggest number of ships required to conquer the planet? In how many turns will the planet 'break-even' in terms of ships expended? What if you factor in hostile ship production that we counter?
+
+== Todo
+
+* Currently toolbot is the strongest bot I have, but he is very weak against sniping. Build a sniper bot to force myself to beat this strategy.
+* A strategy to deal with sniping is to simulate each individual opponent planet trying to attack one of mine. Duration times regeneration is the number of ships I can safely send out to capture new planets. D=10, G=5 means an attack fleet of 50. Putting enough ships on hold to prevent enemies from using their planet-based ships to cap my planets works. 
+* Sending spare ships from 'safe' planets to planets under attack should also help in taking them back or preventing capture. It should also help mobilize ships.
+* Weaknesss detector: nearest X enemy planets: distance and number of ships vs defending ships plus regeneration. Reinforce or garisson where needed. In the time an enemy launches a fleet, how many ships can my planet get reinforced from nearby planets + regeneration from self + regeneration from very close friendlies.
+* Keep track of which planets the enemy targets. Reverse-engineer their strategy or at least low-population planets. Can I trap them this way? Intentionally send out my fleet to a nearby friendly planet to trigger an attack, then fly back to kill it. Provoke and kill
+
+== Bot concepts
+
+* Swarm: a big group of ships that hops from planet to planet, getting fed by 'safe' support planets. Support planets help each other survive, while the swarm goes after the closest concentration of enemy ships. The swarm can split if it overkills by a fair margin.
+* Shiper: Boom, headshot! Enemies capping neutrals: cap one turn later. Enemy planets undefended: attack it when it is relatively undefended.
