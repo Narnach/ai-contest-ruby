@@ -93,9 +93,11 @@ class Sniperbot < AI
     def opportunity_targets
       potential_opportunity_targets.select do |target|
         next false unless closest_planet = @pw.my_closest_planets(target).first
-        min_travel_time = @pw.travel_time(target, closest_planet)
+        turns_to_closest_friendly = @pw.travel_time(target, closest_planet)
         # Only attack if we have planets nearby
-        next min_travel_time < 10
+        turns_to_closest_enemy = @pw.travel_time(target, @pw.closest_enemy_planets(target).first)
+        next true if turns_to_closest_friendly > turns_to_closest_enemy
+        min_travel_time < 10
       end
     end
 
