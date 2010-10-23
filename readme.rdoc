@@ -33,6 +33,7 @@ Targets of opportunity can be found:
 
 * Identifying neutrals to cap should be better. Cap when ships expended to capture it is less than the enemy would spend to capture it. Win is because of regeneration. d(target, enemy) * target.regen > target.num_ships. http://72.44.46.68/canvas?game_id=646192
 * Identify planets to protect or feed. http://72.44.46.68/canvas?game_id=646165
+* Send support ships to the front, because they serve as defense and potential offense there.
 
 == Bot concepts
 
