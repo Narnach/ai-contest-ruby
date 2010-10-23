@@ -109,7 +109,7 @@ class Tournament
 
   def initialize(bots, maps, turns, options={})
     @bots = bots
-    @maps = maps
+    @maps = maps.shuffle
     @turns = turns
     @matches = []
     @lbns = bots.map{|bot| bot.name.length}.max
@@ -128,11 +128,16 @@ class Tournament
       else
         bot1 = bots_pool.shift
       end
-      bot2 = bots_pool.rand
+      if options[:bot2]
+        bot2 = options[:bot2]
+      else
+        bot2 = bots_pool.rand
+      end
       bots_pool.delete(bot2)
       bots_pool.push bot1
       bots_pool.push bot2
-      map = maps.rand
+      map = maps.shift
+      maps.push(map)
 
       game = Playgame.new(:map=>map, :bot1=>bot1, :bot2=>bot2, :debug=>false, :raw_output=>true, :verbose=>false, :analyze=>true, :logfile=>"tournament_game_#{turn}.log")
       match = game.run
@@ -238,8 +243,11 @@ task :tournament do
   bots = BOTS
   maps = MAPS
   turns = (ENV['TURNS'] || bots.size * 5).to_i
+  options = {}
+  options[:bot1]=ENV["BOT1"] if ENV["BOT1"]
+  options[:bot2]=ENV["BOT2"] if ENV["BOT2"]
 
-  tournament = Tournament.new(bots, maps, turns)
+  tournament = Tournament.new(bots, maps, turns, options)
   tournament.play
   tournament.display_stats
 end
