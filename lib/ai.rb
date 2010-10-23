@@ -28,6 +28,7 @@ class AI
   # Don't forget to start a bot's do_turn with a call to super
   def do_turn
     return if @pw.my_planets.length == 0
+    return if @pw.enemy_planets.length == 0
     return if @pw.not_my_planets.length == 0
   end
 
