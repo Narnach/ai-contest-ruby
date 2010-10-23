@@ -59,7 +59,9 @@ class Playgame
   end
 
   def cmd
-    %Q[java -jar tools/PlayGame.jar #{map} #{timeout} #{turns} #{logfile} "ruby -I #{File.dirname(bot1)} #{bot1} #{"-v" if debug1}" "ruby -I #{File.dirname(bot2)} #{bot2} #{"-v" if debug2}"#{"| java -jar tools/ShowGame.jar" if visualize}#{" 2>&1" if self.raw_output}]
+    bot1_cmd = "ruby #{bot1} #{"-v" if debug1}"
+    bot2_cmd = "ruby #{bot2} #{"-v" if debug2}"
+    %Q[java -jar tools/PlayGame.jar #{map} #{timeout} #{turns} #{logfile} "#{bot1_cmd}" "#{bot2_cmd}"#{"| java -jar tools/ShowGame.jar" if visualize}#{" 2>&1" if self.raw_output}]
   end
 
   def run
@@ -271,4 +273,29 @@ end
 desc 'Prepare submissions directory'
 task :submissions => TAGS.map{|tag| "submissions/#{tag}/MyBot.rb"} do
   system "git checkout master"
+  Rake::Task['fix_submissions'].invoke
+end
+
+desc 'Submissions load their own files instead of the current files'
+task :fix_submissions do
+  Dir.glob("submissions/**/*.rb").each do |file|
+    next unless File.file?(file)
+    old_code = File.read(file)
+    new_code = old_code.split("\n").map { |line|
+      if line =~ /require ((["''])(\.\/.+?)\2)/
+        puts "Substituting #{$1}"
+        old_require = $1
+        new_require = $3.sub(/^.\//, '#{File.expand_path(File.dirname(__FILE__))}/')
+        next line.sub(old_require, %Q["#{new_require}"])
+      end
+      if line =~ /Dir\.glob\(((["''])(\.\/.+?)\2)\)/
+        puts "Substituting #{$1}"
+        old_require = $1
+        new_require = $3.sub(/^.\//, '#{File.expand_path(File.dirname(__FILE__))}/')
+        next line.sub(old_require, %Q["#{new_require}"])
+      end
+      line
+    }.join("\n")
+    File.open(file, "w") {|f| f.write(new_code)}
+  end
 end
