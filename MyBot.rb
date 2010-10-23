@@ -9,7 +9,7 @@ require './lib/toolbox.rb'
 require './lib/ships_available.rb'
 
 VERBOSE = ARGV.delete('-v')=='-v'
-STDERR = ARGV.delete('--stderr')=="--stderr"
+LOG_TO_STDERR = ARGV.delete('--stderr')=="--stderr"
 
 bot = ARGV.shift || "sniperbot"
 Dir.glob("./bots/*.rb").each do |file|
@@ -19,5 +19,5 @@ end
 ai_class = AI.find(bot)
 bot = ai_class.new
 bot.logging = VERBOSE
-bot.log_stream = $stderr if STDERR
+bot.log_stream = $stderr if LOG_TO_STDERR
 bot.run
