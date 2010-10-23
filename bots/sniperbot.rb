@@ -6,7 +6,8 @@ class Sniperbot < AI
   # v2: Go on the offensive when I have more ships than my enemy has
   # v3: Optimize targets of opportunity finding
   # v4: Added ReinforceStrategy v2
-  version 4
+  # v5: Added SupplyTheFrontStrategy
+  version 5
 
   def do_turn
     super
@@ -92,12 +93,13 @@ class Sniperbot < AI
 
     def opportunity_targets
       potential_opportunity_targets.select do |target|
-        next false unless closest_planet = @pw.my_closest_planets(target).first
+        next unless closest_planet = @pw.my_closest_planets(target).first
         turns_to_closest_friendly = @pw.travel_time(target, closest_planet)
         # Only attack if we have planets nearby
-        turns_to_closest_enemy = @pw.travel_time(target, @pw.closest_enemy_planets(target).first)
-        next true if turns_to_closest_friendly > turns_to_closest_enemy
-        min_travel_time < 10
+        next unless closest_enemy = @pw.closest_enemy_planets(target).first
+        turns_to_closest_enemy = @pw.travel_time(target, closest_enemy)
+        next true if turns_to_closest_friendly < turns_to_closest_enemy
+        turns_to_closest_friendly < 10
       end
     end
 
@@ -125,7 +127,7 @@ class Sniperbot < AI
     # Check for threats to our planets and reinforce them.
     # Predict future for all my planets, time to look ahead: max of closest enemy planet, inbound fleets and 1 (for no enemies)
     # * If future owner is not me, set defenders to all on the planet and look for help
-    # * TODO: Closest planet: Assume they attack with their whole garisson. After the attack, how many ships would I have left? That is the amount of available ships.
+    # * Closest enemy: Assume they attack with their whole garisson. After the attack, how many ships would I have left? That is the amount of available ships.
     def reinforce_strategy
       in_need_of_help = Array.new
       @pw.my_planets.each do |planet|
