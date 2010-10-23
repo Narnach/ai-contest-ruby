@@ -13,6 +13,7 @@ class Sniperbot < AI
     reinforce_strategy
     sniper_strategy
     opportunity_strategy
+    supply_the_front_strategy
   end
 
   protected
@@ -170,4 +171,21 @@ class Sniperbot < AI
     end
   end
   include ReinforceStrategy
+
+  module SupplyTheFrontStrategy
+    def supply_the_front_strategy
+      my_planets_by_distance_to_enemy = @pw.my_planets.sort_by{|planet| @pw.distance(planet, @pw.closest_enemy_planets(planet).first)}
+      @pw.my_planets.each do |source|
+        next if ships_available_on(source) <= 0
+        source_index = my_planets_by_distance_to_enemy.index(source)
+        next unless target = @pw.my_closest_planets(source).find do |planet|
+          planet_index = my_planets_by_distance_to_enemy.index(planet)
+          planet_index < source_index
+        end
+        log "Supplying the front line"
+        attack_with(source, target, ships_available_on(source))
+      end
+    end
+  end
+  include SupplyTheFrontStrategy
 end
