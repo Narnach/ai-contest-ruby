@@ -7,12 +7,6 @@ class Toolbot < AI
   # v2: Pick different strategies depending on who has advantage
   version 2
 
-  def initialize
-    super
-    @strategies ||= self.class.included_modules.select { |mod| mod.name =~ /Strategy$/ }.map { |mod| mod.name.split("::").last.underscore }
-    log "Available strategies: #{@strategies.join(", ")}"
-  end
-
   def do_turn
     super
     log "Reinforce"
