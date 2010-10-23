@@ -102,6 +102,10 @@ class Playgame
 end
 
 class Tournament
+  DEFAULT_OPTIONS = {
+    :debug=>false,
+    :verbose=>false,
+  }
   # External data
   attr_reader :bots, :turns, :maps, :options
   # Internal data
@@ -139,7 +143,7 @@ class Tournament
       map = maps.shift
       maps.push(map)
 
-      game = Playgame.new(:map=>map, :bot1=>bot1, :bot2=>bot2, :debug=>false, :raw_output=>true, :verbose=>false, :analyze=>true, :logfile=>"tournament_game_#{turn}.log")
+      game = Playgame.new(DEFAULT_OPTIONS.merge(options).merge(:map=>map, :bot1=>bot1, :bot2=>bot2, :analyze=>true, :raw_output=>true, :logfile=>"tournament_game_#{turn}.log"))
       match = game.run
 
       if match[:winner]
@@ -189,8 +193,12 @@ task :prezip_tournament do
   end
   maps = MAPS
   turns = (ENV['TURNS'] || bots.size * 10).to_i
+  options={:bot1=>"./MyBot.rb"}
+  options[:bot1]=ENV['BOT1'] if ENV['BOT1']
+  options[:verbose]=true if ENV['VERBOSE']
+  options[:debug]=true if ENV['DEBUG']
 
-  tournament = Tournament.new(bots, maps, turns, :bot1=>"./MyBot.rb")
+  tournament = Tournament.new(bots, maps, turns, options)
   tournament.play
   tournament.display_stats
 end
