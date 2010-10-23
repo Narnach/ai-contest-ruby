@@ -91,6 +91,10 @@ class PlanetWars
     (@planets-[target]).select{|planet| planet.mine?}.sort_by {|planet| self.travel_time(target, planet)}
   end
 
+  def closest_enemy_planets(target)
+    (@planets-[target]).select{|planet| planet.enemy?}.sort_by {|planet| self.travel_time(target, planet)}
+  end
+
   def my_fleets
     @fleets.select {|fleet| fleet.owner == 1 }
   end

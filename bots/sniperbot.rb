@@ -4,7 +4,8 @@ class Sniperbot < AI
   bot 'sniperbot'
   # v1: Wait and shoot. Win by exhausting the enemy.
   # v2: Go on the offensive when I have more ships than my enemy has
-  version 2
+  # v3: Optimize targets of opportunity finding
+  version 3
 
   def do_turn
     super
@@ -78,7 +79,12 @@ class Sniperbot < AI
     end
 
     def potential_opportunity_targets
-      @pw.not_my_planets.reject {|planet| planet.growth_rate == 0}.sort_by{|planet| planet.num_ships}
+      @pw.not_my_planets.select { |planet|
+        next true unless closest_enemy = @pw.closest_enemy_planets(planet).first
+        distance_to_enemy = @pw.travel_time(planet, closest_enemy)
+        regeneration_until_enemy_arrives = planet.growth_rate * distance_to_enemy
+        next planet.num_ships < regeneration_until_enemy_arrives
+      }.sort_by{|planet| planet.num_ships}
     end
 
     def opportunity_targets

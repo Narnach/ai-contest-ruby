@@ -21,7 +21,7 @@ Targets of opportunity can be found:
 
 == Todo
 
-* Currently toolbot is the strongest bot I have, but he is very weak against sniping. Build a sniper bot to force myself to beat this strategy.
+* Currently toolbot is the strongest bot I have, but he is very weak against sniping.
 * A strategy to deal with sniping is to simulate each individual opponent planet trying to attack one of mine. Duration times regeneration is the number of ships I can safely send out to capture new planets. D=10, G=5 means an attack fleet of 50 means I can regenerate 50 ships in 10 turns, allowing me to send out all ships and still fight off a size-50 fleet in 10 turns. Putting enough ships on hold to prevent enemies from using their planet-based ships to cap my planets works. 
 * Sending spare ships from 'safe' planets to planets under attack should also help in taking them back or preventing capture. It should also help mobilize ships.
 * Weaknesss detector: nearest X enemy planets: distance and number of ships vs defending ships plus regeneration. Reinforce or garisson where needed. In the time an enemy launches a fleet, how many ships can my planet get reinforced from nearby planets + regeneration from self + regeneration from very close friendlies.a
