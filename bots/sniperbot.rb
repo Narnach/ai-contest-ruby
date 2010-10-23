@@ -7,7 +7,8 @@ class Sniperbot < AI
   # v3: Optimize targets of opportunity finding
   # v4: Added ReinforceStrategy v2
   # v5: Added SupplyTheFrontStrategy
-  version 5
+  # v6: Added NumericalSuperiorityStrategy
+  version 6
 
   def do_turn
     super
@@ -15,6 +16,7 @@ class Sniperbot < AI
     sniper_strategy
     opportunity_strategy
     supply_the_front_strategy
+    numerical_superiority_strategy
   end
 
   protected
@@ -178,7 +180,6 @@ class Sniperbot < AI
 
   module SupplyTheFrontStrategy
     def supply_the_front_strategy
-      my_planets_by_distance_to_enemy = @pw.my_planets.sort_by{|planet| @pw.distance(planet, @pw.closest_enemy_planets(planet).first)}
       @pw.my_planets.each do |source|
         next if ships_available_on(source) <= 0
         source_index = my_planets_by_distance_to_enemy.index(source)
@@ -192,4 +193,21 @@ class Sniperbot < AI
     end
   end
   include SupplyTheFrontStrategy
+
+  module NumericalSuperiorityStrategy
+    def numerical_superiority_strategy
+      return unless @my_population > @enemy_population
+      advantage = @my_population - @enemy_population
+      my_planets_by_distance_to_enemy.each do |source|
+        break if advantage <= 0
+        next if ships_available_on(source) <= 0
+        ships_to_send = [ships_available_on(source), advantage].min
+        target = @pw.closest_enemy_planets(source).first
+        log "Using numerical superiority to weaken the enemy"
+        attack_with(source, target, ships_to_send)
+        advantage -= ships_to_send
+      end
+    end
+  end
+  include NumericalSuperiorityStrategy
 end

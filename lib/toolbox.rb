@@ -27,6 +27,10 @@ module Toolbox
     end
   end
 
+  def my_planets_by_distance_to_enemy
+    @pw.my_planets.sort_by{|planet| @pw.distance(planet, @pw.closest_enemy_planets(planet).first)}
+  end
+
   def predict_future_population(target, turns=nil)
     predictions = [target.clone]
     inbound_fleets = @pw.fleets_underway_to(target) + @fleets_dispatched[target.planet_id]
