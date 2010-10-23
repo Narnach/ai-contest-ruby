@@ -31,9 +31,11 @@ Targets of opportunity can be found:
 
 == Sniperbot todo
 
-* Identifying neutrals to cap should be better. Cap when ships expended to capture it is less than the enemy would spend to capture it. Win is because of regeneration. d(target, enemy) * target.regen > target.num_ships. http://72.44.46.68/canvas?game_id=646192
-* Identify planets to protect or feed. http://72.44.46.68/canvas?game_id=646165
-* Send support ships to the front, because they serve as defense and potential offense there.
+* Close proximity to enemy planets with high population: when they send their fleet, my planets may send ships elsewhere and become vulnerable.
+* Double check this scenario: cap all neutral planets, of which the regeneration will compensate for the ships spent in conquering it, before an enemy can arrive.
+* When ahead, start capping neutrals until my regeneration is greater than my enemy.
+* Weakening the enemy when ahead will be a fallback scenario when my regeneration is ahead as well.
+* Calculate the destination of all fleets, to calculate future regeneration and see if I should grow or attack.
 
 == Bot concepts
 
