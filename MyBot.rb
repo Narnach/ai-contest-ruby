@@ -11,7 +11,7 @@ require './lib/ships_available.rb'
 VERBOSE = ARGV.delete('-v')=='-v'
 STDERR = ARGV.delete('--stderr')=="--stderr"
 
-bot = ARGV.shift || "toolbot"
+bot = ARGV.shift || "sniperbot"
 Dir.glob("./bots/*.rb").each do |file|
   require file
 end
