@@ -35,11 +35,11 @@ module ShipsAvailable
   end
 
   def assign_defenders(planet, num_ships)
-    if ships_available(planet) >= num_ships
+    if ships_available_on(planet) >= num_ships
       @defenders[planet.planet_id] = num_ships
       @ships_available[planet.planet_id] -= num_ships
     else
-      log "!!! Tried to assign more defenders than there are ships on planet #{planet.planet_id}. Want #{num_ships}, have #{ships_available(planet)}"
+      log "!!! Tried to assign more defenders than there are ships on planet #{planet.planet_id}. Want #{num_ships}, have #{ships_available_on(planet)}"
     end
   end
 
