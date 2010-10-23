@@ -4,7 +4,9 @@
 #   MyBot.rb <ai_name>
 require './lib/core_ext.rb'
 require './lib/planetwars.rb'
-require './lib/ai.rb'
+require './lib/ai.rb'                      
+require './lib/toolbox.rb'
+require './lib/ships_available.rb'
 
 VERBOSE = ARGV.delete('-v')=='-v'
 STDERR = ARGV.delete('--stderr')=="--stderr"
