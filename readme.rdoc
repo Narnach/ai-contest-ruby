@@ -1,42 +1,32 @@
-Stats per player
-* Number of ships
-  * On planets
-  * In transit
-  * on planet / total ships (defense quotient?)
-* Total growth
+= AI Challenge Bot
 
-Each planet can keep track of its surroundings:
-* All planets in range 1/2/3/4/5
-* Closest 3/5/10 planets (once)
-* Distance to all friendly planets (update on takeover and loss)
-* Number of ships that could reach it in 1/2/3/4/5 turns
-* Inbound fleets and arrival times
+This is a collection of tools and bots for participating in the Google AI Challenge ( http://ai-contest.com ).
+It started with a very naieve bot and a planetwars library from the starter kit. On top of that I have built my own set of libraries and support tools to easily build multiple bots and have them share strategies.
 
-Based on this, projections can be made:
-* Projected population in next 1/2/3/4/5 turns (current ships, growth per turn, inbound fleets)
-* Forecast/alert state: dead in 1/2/3/4/5 turns
+The readme contains notes with observations from live / TCP matches on weaknesses my bots have and how they could be fixed. Apparently this has worked out, since Sniperbot made it to rank 190, while Toolbot never got above rank 650-ish.
 
-Targets of opportunity can be found:
-* (Nearby) neutral planets with inbound enemy ships, what is the planet's population in the next 1/2/3/4/5 turns? How many ships are en-route, so what is the biggest number of ships required to conquer the planet? In how many turns will the planet 'break-even' in terms of ships expended? What if you factor in hostile ship production that we counter?
+== History
 
-== Todo
+* Naieve bot - the starter kit bot
+* Grower. Adds optimal target planet calculations
+* Speed. Improves on Grower by targeting close planets, higher fleet limit.
+* Seer. Introduced naieve future prediction (hence the name) and the use of different strategies in a linear fashion
+* Toolbot. Uses modules to encapsulate strategies. This makes them easier to share with other bots. It also considers global game state to decide to go offensive or defensive.
+* Sniperbot. Built initially to expose Toolbot's main weakness, but it was so much stronger that I made it my default bot and worked on making it more robust.
 
-* Currently toolbot is the strongest bot I have, but he is very weak against sniping.
-* A strategy to deal with sniping is to simulate each individual opponent planet trying to attack one of mine. Duration times regeneration is the number of ships I can safely send out to capture new planets. D=10, G=5 means an attack fleet of 50 means I can regenerate 50 ships in 10 turns, allowing me to send out all ships and still fight off a size-50 fleet in 10 turns. Putting enough ships on hold to prevent enemies from using their planet-based ships to cap my planets works. 
-* Sending spare ships from 'safe' planets to planets under attack should also help in taking them back or preventing capture. It should also help mobilize ships.
-* Weaknesss detector: nearest X enemy planets: distance and number of ships vs defending ships plus regeneration. Reinforce or garisson where needed. In the time an enemy launches a fleet, how many ships can my planet get reinforced from nearby planets + regeneration from self + regeneration from very close friendlies.a
-* Keep track of which planets the enemy targets. Reverse-engineer their strategy or at least low-population planets. Can I trap them this way? Intentionally send out my fleet to a nearby friendly planet to trigger an attack, then fly back to kill it. Provoke and kill
-* Only go all-out when I have a big advantage, to mop up.
-* When capping, calculate defensibility of new location.
+== Features designed and built
 
-== Sniperbot todo
+* Global stats: how am I doing vs my enemy on the whole map vs on just one planet or fleet. When I'm ahead number-wise, I can wear my opponent down. If I'm behind, I need to be agressive or I lose by being outnumbered.
+* Future prediction: given a planet and all known fleets, what is the certainty we have about the future? When will fleets invade and conquer the planet? How many ships does it need to reinforce against an invasion fleet?
+* Supply chains: over time, the planet that sends out most fleets to the enemy changes. If you don't setup supply lines, you will have long transit times for inbound fleets, which are easier to counter. In a game of perfect information, make sure there are lots of possibilities, but as little certainties as possible.
+* Defensive behavior: reserve ships to fight off potential or real attacks. Also keep in mind the effect of the closest enemy planet attacking me, how much ships are needed to fight that off?
 
-* Close proximity to enemy planets with high population: when they send their fleet, my planets may send ships elsewhere and become vulnerable.
+== Sniperbot todo / ideas
+
+* There is a weakness when in close proximity to enemy planets with high population. When they send their fleet, my planets may send ships elsewhere and become vulnerable.
 * Double check this scenario: cap all neutral planets, of which the regeneration will compensate for the ships spent in conquering it, before an enemy can arrive.
-* When ahead, start capping neutrals until my regeneration is greater than my enemy.
-* Weakening the enemy when ahead will be a fallback scenario when my regeneration is ahead as well.
+* When ahead, start capping neutrals until my regeneration is greater than my enemy. Attacking the closest enemy head-on has proven to make me lose my advantage in numbers versus their superior regeneration.
+* Weakening the enemy when ahead will be a fallback scenario when my regeneration is ahead as well. But maybe go after their weakest planets instead of after their closest planets.
 * Calculate the destination of all fleets, to calculate future regeneration and see if I should grow or attack.
-
-== Bot concepts
-
-* Swarm: a big group of ships that hops from planet to planet, getting fed by 'safe' support planets. Support planets help each other survive, while the swarm goes after the closest concentration of enemy ships. The swarm can split if it overkills by a fair margin.
+* distance scoring of targets: d(me, planet) - d(enemy, planet). Negative is good, positive is bad.
+* When capping, calculate defensibility of new location. Capping an enemy planet even for one turn gives an advantage in regen, but the opportunity cost may be to not cap a very defensible neutral with similar regen.

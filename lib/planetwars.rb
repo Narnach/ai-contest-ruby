@@ -1,4 +1,5 @@
 # This file comes from the starter kit
+# I did add more convenience methods to it, as well as the Ownership module
 
 module Ownership
   def neutral?
