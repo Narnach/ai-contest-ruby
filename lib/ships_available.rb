@@ -49,7 +49,7 @@ module ShipsAvailable
 
   def attack_with(source, target, num_ships)
     if self.can_attack?(source, num_ships)
-      log "Attacking planet #{target.planet_id} with #{num_ships} ships from planet #{source.planet_id}. Distance is #{@pw.travel_time(source, target)}, defending ships are #{target.num_ships}."
+      log "#{source.owner == target.owner ? "Reinforcing" : "Attacking"} planet #{target.planet_id} with #{num_ships} ships from planet #{source.planet_id}. Distance is #{@pw.travel_time(source, target)}, defending ships are #{target.num_ships}."
       @ships_available[source.planet_id] -= num_ships
       @pw.issue_order(source.planet_id, target.planet_id, num_ships)
       dispatch_fleet(source, target, num_ships)
