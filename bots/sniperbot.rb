@@ -78,28 +78,9 @@ class Sniperbot < AI
 
   module OpportunityStrategy
     def opportunity_strategy
-      opportunity_targets.each do |target|
+      easiest_planets_to_capture.each do |target|
         log "Opportunity target: planet #{target.planet_id}"
         try_attack_of_opportunity_on(target)
-      end
-    end
-
-    def opportunity_targets
-      planets = @pw.not_my_planets.select {|planet|
-        next unless my_closest_planet = @pw.my_closest_planets(planet).first
-        next unless closest_enemy_planet = @pw.closest_enemy_planets(planet).first
-        next false if @pw.distance(planet, my_closest_planet) - @pw.distance(planet, closest_enemy_planet) > 0
-        planet.growth_rate >= 1
-      }
-      planets.sort_by do |planet|
-        if closest_enemy_planet = @pw.closest_enemy_planets(planet).first
-          nearest_fleet = closest_enemy_planet.num_ships
-          regen_until_enemy_arrives = @pw.travel_time(closest_enemy_planet, planet) * planet.growth_rate
-        else
-          nearest_fleet = 0
-          regen_until_enemy_arrives = 0
-        end
-        (planet.num_ships + nearest_fleet - regen_until_enemy_arrives) / planet.growth_rate
       end
     end
 
@@ -202,21 +183,9 @@ class Sniperbot < AI
       end
     end
 
-    def planets_worth_capturing
-      planets = @pw.not_my_planets.select {|planet|
-        my_closest_planet = @pw.my_closest_planets(planet).first
-        next unless my_closest_planet
-        closest_enemy_planet = @pw.closest_enemy_planets(planet).first
-        next unless closest_enemy_planet
-        next false if @pw.distance(planet, my_closest_planet) - @pw.distance(planet, closest_enemy_planet) > 0
-        planet.growth_rate >= 1
-      }
-      planets.sort_by {|planet| planet.num_ships / planet.growth_rate}
-    end
-
     def capture_nearby_planets
       advantage = @my_population - @enemy_population
-      planets_worth_capturing.each do |target|
+      easiest_planets_to_capture.each do |target|
         return if advantage <= 0
         @pw.my_closest_planets(target).each do |source|
           return if advantage <= 0
@@ -235,7 +204,7 @@ class Sniperbot < AI
         break if advantage <= 0
         next if ships_available_on(source) <= 0
         ships_to_send = [ships_available_on(source), advantage].min
-        target = @pw.closest_enemy_planets(source).first
+        break unless target = @pw.closest_enemy_planets(source).first
         log "Using numerical superiority to weaken the enemy"
         attack_with(source, target, ships_to_send)
         advantage -= ships_to_send

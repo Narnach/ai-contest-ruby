@@ -28,7 +28,27 @@ module Toolbox
   end
 
   def my_planets_by_distance_to_enemy
+    return @pw.my_planets unless @pw.enemy_planets.size > 0
     @pw.my_planets.sort_by{|planet| @pw.distance(planet, @pw.closest_enemy_planets(planet).first)}
+  end
+
+  def easiest_planets_to_capture
+    planets = @pw.not_my_planets.select {|planet|
+      next unless my_closest_planet = @pw.my_closest_planets(planet).first
+      next unless closest_enemy_planet = @pw.closest_enemy_planets(planet).first
+      next false if @pw.distance(planet, my_closest_planet) - @pw.distance(planet, closest_enemy_planet) > 0
+      planet.growth_rate >= 1
+    }
+    planets.sort_by do |planet|
+      if closest_enemy_planet = @pw.closest_enemy_planets(planet).first
+        nearest_fleet = closest_enemy_planet.num_ships
+        regen_until_enemy_arrives = @pw.travel_time(closest_enemy_planet, planet) * planet.growth_rate
+      else
+        nearest_fleet = 0
+        regen_until_enemy_arrives = 0
+      end
+      (planet.num_ships + nearest_fleet - regen_until_enemy_arrives) / planet.growth_rate
+    end
   end
 
   def predict_future_population(target, turns=nil)
