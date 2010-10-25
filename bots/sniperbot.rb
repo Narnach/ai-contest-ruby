@@ -210,9 +210,10 @@ class Sniperbot < AI
         next unless my_closest_planets
         closest_enemy_planet = @pw.closest_enemy_planets(planet).first
         next unless closest_enemy_planets
-        @pw.distance(planet, my_closest_planet) - @pw.distance(planet, closest_enemy_planet) <= 0
+        next false if @pw.distance(planet, my_closest_planet) - @pw.distance(planet, closest_enemy_planet) > 0
+        @pw.growth_rate >= 1
       }
-      planets.sort_by {|planet| planet.growth_rate > 0 ? planet.num_ships / planet.growth_rate : 0}.reverse
+      planets.sort_by {|planet| planet.num_ships / planet.growth_rate}
     end
 
     def capture_nearby_planets
