@@ -197,6 +197,34 @@ class Sniperbot < AI
   module NumericalSuperiorityStrategy
     def numerical_superiority_strategy
       return unless @my_population > @enemy_population
+      if @my_growth <= @enemy_growth
+        capture_nearby_planets
+      else
+        attack_enemy_planets
+      end
+    end
+
+    def planets_worth_capturing
+      planets = @pw.not_my_planets.select {|planet| @pw.distance(planet, @pw.my_closest_planets(planet).first) - @pw.distance(planet, @pw.closest_enemy_planets(planet).first) <= 0}
+      planets.sort_by {|planet| planet.growth_rate > 0 ? planet.num_ships / planet.growth_rate : 0}.reverse
+    end
+
+    def capture_nearby_planets
+      advantage = @my_population - @enemy_population
+      planets_worth_capturing.each do |target|
+        return if advantage <= 0
+        @pw.my_closest_planets(target).each do |source|
+          return if advantage <= 0
+          next if ships_available_on(source) <= 0
+          ships_to_send = [ships_available_on(source), advantage].min
+          log "Using numerical superiority to capture nearby planets"
+          attack_with(source, target, ships_to_send)
+          advantage -= ships_to_send
+        end
+      end
+    end
+
+    def attack_enemy_planets
       advantage = @my_population - @enemy_population
       my_planets_by_distance_to_enemy.each do |source|
         break if advantage <= 0
