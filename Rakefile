@@ -49,6 +49,7 @@ class Playgame
     end
     self.bot1 = "./Mybot.rb #{self.bot1}" unless File.exist?(self.bot1)
     self.bot2 = "./Mybot.rb #{self.bot2}" unless File.exist?(self.bot2)
+    self.map  = "maps/map#{self.map}.txt" unless File.exist?(self.map)
     # Use debug as a flag to override debug1 and debug2, unless they are explicitly set
     self.debug=true if ENV['DEBUG']=='true'
     self.debug1=true if self.debug && !options.has_key?(:debug1)
@@ -142,8 +143,12 @@ class Tournament
       bots_pool.delete(bot2)
       bots_pool.push bot1
       bots_pool.push bot2
-      map = maps.shift
-      maps.push(map)
+      if options[:map]
+        map = options[:map]
+      else
+        map = maps.shift
+        maps.push(map)
+      end
 
       game = Playgame.new(DEFAULT_OPTIONS.merge(options).merge(:map=>map, :bot1=>bot1, :bot2=>bot2, :analyze=>true, :raw_output=>true, :logfile=>"tournament_game_#{turn}.log"))
       match = game.run
@@ -256,6 +261,7 @@ task :tournament do
   options = {}
   options[:bot1]=ENV["BOT1"] if ENV["BOT1"]
   options[:bot2]=ENV["BOT2"] if ENV["BOT2"]
+  options[:map]=ENV["MAP"] if ENV["MAP"]
 
   tournament = Tournament.new(bots, maps, turns, options)
   tournament.play
