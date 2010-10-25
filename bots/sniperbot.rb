@@ -136,7 +136,7 @@ class Sniperbot < AI
         distance = 1
         possibly_required_defenders = []
 
-        if furthest_inbound_fleet = @pw.fleets_underway_to(planet).sort{|fleet| fleet.turns_remaining}.last
+        if furthest_inbound_fleet = @pw.fleets_underway_to(planet).sort_by{|fleet| fleet.turns_remaining}.last
           distance = furthest_inbound_fleet.turns_remaining if furthest_inbound_fleet.turns_remaining > distance
         end
         if closest_enemy = @pw.closest_enemy_planets(planet).first
@@ -205,7 +205,13 @@ class Sniperbot < AI
     end
 
     def planets_worth_capturing
-      planets = @pw.not_my_planets.select {|planet| @pw.distance(planet, @pw.my_closest_planets(planet).first) - @pw.distance(planet, @pw.closest_enemy_planets(planet).first) <= 0}
+      planets = @pw.not_my_planets.select {|planet| 
+        my_closest_planet = @pw.my_closest_planets(planet).first
+        next unless my_closest_planets
+        closest_enemy_planet = @pw.closest_enemy_planets(planet).first
+        next unless closest_enemy_planets
+        @pw.distance(planet, my_closest_planet) - @pw.distance(planet, closest_enemy_planet) <= 0
+      }
       planets.sort_by {|planet| planet.growth_rate > 0 ? planet.num_ships / planet.growth_rate : 0}.reverse
     end
 
