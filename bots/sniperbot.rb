@@ -84,24 +84,22 @@ class Sniperbot < AI
       end
     end
 
-    def potential_opportunity_targets
-      @pw.not_my_planets.select { |planet|
-        next true unless closest_enemy = @pw.closest_enemy_planets(planet).first
-        distance_to_enemy = @pw.travel_time(planet, closest_enemy)
-        regeneration_until_enemy_arrives = planet.growth_rate * distance_to_enemy
-        next planet.num_ships < regeneration_until_enemy_arrives
-      }.sort_by{|planet| planet.num_ships}
-    end
-
     def opportunity_targets
-      potential_opportunity_targets.select do |target|
-        next unless closest_planet = @pw.my_closest_planets(target).first
-        turns_to_closest_friendly = @pw.travel_time(target, closest_planet)
-        # Only attack if we have planets nearby
-        next unless closest_enemy = @pw.closest_enemy_planets(target).first
-        turns_to_closest_enemy = @pw.travel_time(target, closest_enemy)
-        next true if turns_to_closest_friendly < turns_to_closest_enemy
-        turns_to_closest_friendly < 10
+      planets = @pw.not_my_planets.select {|planet|
+        next unless my_closest_planet = @pw.my_closest_planets(planet).first
+        next unless closest_enemy_planet = @pw.closest_enemy_planets(planet).first
+        next false if @pw.distance(planet, my_closest_planet) - @pw.distance(planet, closest_enemy_planet) > 0
+        planet.growth_rate >= 1
+      }
+      planets.sort_by do |planet|
+        if closest_enemy_planet = @pw.closest_enemy_planets(planet).first
+          nearest_fleet = closest_enemy_planet.num_ships
+          regen_until_enemy_arrives = @pw.travel_time(closest_enemy_planet, planet) * planet.growth_rate
+        else
+          nearest_fleet = 0
+          regen_until_enemy_arrives = 0
+        end
+        (planet.num_ships + nearest_fleet - regen_until_enemy_arrives) / planet.growth_rate
       end
     end
 
@@ -205,7 +203,7 @@ class Sniperbot < AI
     end
 
     def planets_worth_capturing
-      planets = @pw.not_my_planets.select {|planet| 
+      planets = @pw.not_my_planets.select {|planet|
         my_closest_planet = @pw.my_closest_planets(planet).first
         next unless my_closest_planet
         closest_enemy_planet = @pw.closest_enemy_planets(planet).first
