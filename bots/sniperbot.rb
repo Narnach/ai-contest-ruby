@@ -8,7 +8,8 @@ class Sniperbot < AI
   # v4: Added ReinforceStrategy v2
   # v5: Added SupplyTheFrontStrategy
   # v6: Added NumericalSuperiorityStrategy
-  version 6
+  # v7: Adjusted target finding algorithms
+  version 7
 
   def do_turn
     super
@@ -31,7 +32,7 @@ class Sniperbot < AI
 
     # Find all potentially sniper-able planets
     def potential_sniper_targets
-      @pw.enemy_fleets.map{|fleet| fleet.destination_planet}.uniq.map{|planet_id| @pw.planets[planet_id]}
+      @pw.enemy_fleets.map{|fleet| [fleet.destination_planet, fleet.source_planet]}.flatten.uniq.map{|planet_id| @pw.planets[planet_id]}
     end
 
     # The best sniper targets are planets that will be conquered by the enemy's fleets,
