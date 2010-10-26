@@ -27,9 +27,9 @@ module Toolbox
     end
   end
 
-  def my_planets_by_distance_to_enemy
-    return @pw.my_planets unless @pw.enemy_planets.size > 0
-    @pw.my_planets.sort_by{|planet| @pw.distance(planet, @pw.closest_enemy_planets(planet).first)}
+  def my_planets_by_distance_to_enemy(planets=@pw.my_planets)
+    return planets unless @pw.enemy_planets.size > 1
+    planets.sort_by{|planet| @pw.distance(planet, @pw.closest_enemy_planets(planet).first)}
   end
 
   def easiest_planets_to_capture(planets=@pw.not_my_planets)

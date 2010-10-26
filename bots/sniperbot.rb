@@ -159,12 +159,18 @@ class Sniperbot < AI
   include ReinforceStrategy
 
   module SupplyTheFrontStrategy
+    def do_turn
+      @suppliable_planets = nil
+      super
+    end
+
     def supply_the_front_strategy
       @pw.my_planets.each do |source|
         next if ships_available_on(source) <= 0
-        source_index = my_planets_by_distance_to_enemy.index(source)
-        next unless target = @pw.my_closest_planets(source).find do |planet|
-          planet_index = my_planets_by_distance_to_enemy.index(planet)
+        source_index = my_planets_by_distance_to_enemy(suppliable_planets).index(source)
+        next unless target = suppliable_planets.sort_by{|planet| @pw.distance(planet, source)}.find do |planet|
+          next if planet == source
+          planet_index = my_planets_by_distance_to_enemy(suppliable_planets).index(planet)
           if closest_enemy_planet = @pw.closest_enemy_planets(source).first
             planet_index < source_index && @pw.travel_time(planet, source) < @pw.travel_time(source, closest_enemy_planet)
           else
@@ -174,6 +180,17 @@ class Sniperbot < AI
         log "Supplying the front line"
         attack_with(source, target, ships_available_on(source))
       end
+    end
+
+    def suppliable_planets
+      @suppliable_planets ||= (
+        future_owned_planets = @pw.my_fleets.map{ |fleet|
+          fleet_planet = @pw.planets[fleet.destination_planet]
+          predictions = predict_future_population(fleet_planet, fleet.turns_remaining)
+          predictions.last.mine? ? fleet_planet : nil
+        }.compact
+        (@pw.my_planets + future_owned_planets).uniq
+      )
     end
   end
   include SupplyTheFrontStrategy
