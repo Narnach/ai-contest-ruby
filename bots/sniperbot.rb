@@ -164,7 +164,11 @@ class Sniperbot < AI
         source_index = my_planets_by_distance_to_enemy.index(source)
         next unless target = @pw.my_closest_planets(source).find do |planet|
           planet_index = my_planets_by_distance_to_enemy.index(planet)
-          planet_index < source_index
+          if closest_enemy_planet = @pw.closest_enemy_planets(source).first
+            planet_index < source_index && @pw.travel_time(planet, source) < @pw.travel_time(source, closest_enemy_planet)
+          else
+            planet_index < source_index
+          end
         end
         log "Supplying the front line"
         attack_with(source, target, ships_available_on(source))
