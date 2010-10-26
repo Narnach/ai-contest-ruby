@@ -34,3 +34,4 @@ The readme contains notes with observations from live / TCP matches on weaknesse
 * Double check this scenario: cap all neutral planets, of which the regeneration will compensate for the ships spent in conquering it, before an enemy can arrive.
 * Use predicted future to calculate which planet should receive supply chains. This may send the supply chain straight after a capture fleet.
 * Account for lost regeneration from travel time when deciding what planet to cap or not ( http://ai-contest.com/visualizer.php?game_id=6201368 : capping the size 44 vs 25 vs 48 planet )
+* Double-check SniperStrategy target finder. It attacks planets that are not defensible. This can only work when sending a supply line straight after it. Otherwise, snipe closer targets.
