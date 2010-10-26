@@ -199,7 +199,7 @@ task :prezip_tournament do
     exit 1
   end
   maps = MAPS
-  turns = (ENV['TURNS'] || bots.size * 10).to_i
+  turns = [(ENV['TURNS'] || bots.size * 10).to_i, 50].min
   options={:bot1=>"./MyBot.rb"}
   options[:bot1]=ENV['BOT1'] if ENV['BOT1']
   options[:verbose]=true if ENV['VERBOSE']
@@ -224,8 +224,8 @@ end
 
 desc "Tag this git commit with the latest tag"
 task :tag do
-  previous_tag = `git tag -l`.split("\n").map{|tag| tag.strip}.sort.last
-  new_tag = "v#{previous_tag.gsub(/\D+/,"").to_i + 1}"
+  previous_tag = `git tag -l`.split("\n").map{|tag| tag.strip}.map{|str| str.gsub(/\D+/,"").to_i}.sort.last
+  new_tag = "v#{previous_tag + 1}"
   puts new_tag
   system "git tag -a #{new_tag} -m #{new_tag}"
 end
