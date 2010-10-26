@@ -29,6 +29,7 @@ The readme contains notes with observations from live / TCP matches on weaknesse
 
 == Sniperbot todo / ideas
 
+* Use predicted future for all planets to calculate future ship count and planets' regeneration and to see if I should grow or attack.
 * There is a weakness when in close proximity to enemy planets with high population. When they send their fleet, my planets may send ships elsewhere and become vulnerable.
 * Double check this scenario: cap all neutral planets, of which the regeneration will compensate for the ships spent in conquering it, before an enemy can arrive.
-* Calculate the destination of all fleets, to calculate future regeneration and see if I should grow or attack.
+* Use predicted future to calculate which planet should receive supply chains. This may send the supply chain straight after a capture fleet.
