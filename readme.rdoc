@@ -39,3 +39,17 @@ The readme contains notes with observations from live / TCP matches on weaknesse
   * Sniperbot attacks the enemy's target with the intent of sniping it. After the initial fleet, there is no real follow-up. Fleets in the air towards hostile planets should get support. This should almost be a primary module. SupportSniperStrategy.
   * The RoI of sending 31 ships on an 11-turn journey is not very high. A 16-turn journey for 24 ships is even worse. In total, 78 ships are sent south in the first 10 turns, but there is no follow-up. It weakens the enemy, but it does not impact either player's growth. Actually, it does not prevent the enemy from capping, so ships are lost. The 78 population size-4 planet to the west would have been a better investment. It is 5 turns away and would have generated break-even in 19 turns. That is 8 turns after the failed attack on the 16-turn distance enemy planet. The 60-ship size-5 ship is a 12-turn recoup and should be a primary target.
   * I think the bot needs primary goals, as it currently starts to lose based on following low-level impulse-responses instead of a thought-through plan.
+
+== Different strategies
+
+* Adopt a global hitlist
+  * All planets attack target 1 until it predicts as captured, then move to target 2, etc.
+  * Hitlist is updated each turn, based on the usual metrics: defense fleet vs regeneration (RoI) enemy or neutral? Enemy can always attack, neutral only to cap
+  * Save up ships to hit targets
+  * Supply lines route ships to targets
+  * Make sure to capture a lot before attacking. Targets of opportunity are the only exception (enemy planet closer to me than to enemy)
+  * Plot a supply line chain and time to destination using this
+  * Plot 'what if' situations. What if the enemy would send out all fleets to all planets in the area? How many ships can the get where in how many turns? On what planets can I get more ships in the same time? Capture those.
+* Focus only on growth
+  * Capture planets with a future prediction of a high number of turns, such as 50.
+  * Do global future predictions. In 20 turns, am I ahead ship and growth-wise?
