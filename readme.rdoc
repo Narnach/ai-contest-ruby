@@ -20,6 +20,7 @@ The readme contains notes with observations from live / TCP matches on weaknesse
 * Future prediction: given a planet and all known fleets, what is the certainty we have about the future? When will fleets invade and conquer the planet? How many ships does it need to reinforce against an invasion fleet?
 * Supply chains: over time, the planet that sends out most fleets to the enemy changes. If you don't setup supply lines, you will have long transit times for inbound fleets, which are easier to counter. In a game of perfect information, make sure there are lots of possibilities, but as little certainties as possible.
 * Defensive behavior: reserve ships to fight off potential or real attacks. Also keep in mind the effect of the closest enemy planet attacking me, how much ships are needed to fight that off?
+* Use predicted future to calculate which planet should receive supply chains. This may send the supply chain straight after a capture fleet to back it up and defend it against enemy reinforcements
 
 == Features / behavioral fixes / lessons learned
 
@@ -31,7 +32,6 @@ The readme contains notes with observations from live / TCP matches on weaknesse
 
 * Use predicted future for all planets to calculate future ship count and planets' regeneration and to see if I should grow or attack.
 * There is a weakness when in close proximity to enemy planets with high population. When they send their fleet, my planets may send ships elsewhere and become vulnerable.
-* Use predicted future to calculate which planet should receive supply chains. This may send the supply chain straight after a capture fleet.
 * Send supply chains to the closest planet higher up the supply chain. Shorter lines means faster attacks.
 * Account for lost regeneration from travel time when deciding what planet to cap or not ( http://ai-contest.com/visualizer.php?game_id=6201368 : capping the size 44 vs 25 vs 48 planet )
 * Double-check SniperStrategy target finder. It attacks planets that are not defensible. This can only work when sending a supply line straight after it. Otherwise, snipe closer targets.

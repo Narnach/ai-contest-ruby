@@ -9,14 +9,20 @@ class Sniperbot < AI
   # v5: Added SupplyTheFrontStrategy
   # v6: Added NumericalSuperiorityStrategy
   # v7: Adjusted target finding algorithms
-  version 7
+  # v8: Treat planets that get invaded as if they were my own: defend them and supply them
+  version 8
 
   def do_turn
     super
+    # Set defenders for my own planets and send aid to help planets under attack
     reinforce_strategy
+    # Attack targets that can be conquered by a low amount of ships, for example by striking right after my opponent captures a neutral planet
     sniper_strategy
+    # Attack targets that are a good investment: nearby, reachable and not well defended
     opportunity_strategy
+    # When there are ships left, send them to a planet closer to the front-lines
     supply_the_front_strategy
+    # Based on where we are numbers-wise, grab more planets or attack the enemy
     numerical_superiority_strategy
   end
 
@@ -96,7 +102,7 @@ class Sniperbot < AI
         # Only attack when this planet could take out the target
         ships_needed = predictions.last.num_ships + 1
 
-        # Send a maximum of 25% of the standing fleet to capture targets of opportunity
+        # Capture the planet when we have enough non-defending ships available
         next unless ships_available_on(source) >= ships_needed
         attack_with(source, target, ships_needed)
       end
@@ -165,6 +171,7 @@ class Sniperbot < AI
     end
 
     def supply_the_front_strategy
+      log "Supplying the front lines"
       @pw.my_planets.each do |source|
         next if ships_available_on(source) <= 0
         source_index = my_planets_by_distance_to_enemy(suppliable_planets).index(source)
@@ -177,7 +184,6 @@ class Sniperbot < AI
             planet_index < source_index
           end
         end
-        log "Supplying the front line"
         attack_with(source, target, ships_available_on(source))
       end
     end
@@ -186,8 +192,8 @@ class Sniperbot < AI
       @suppliable_planets ||= (
         future_owned_planets = @pw.my_fleets.map{ |fleet|
           fleet_planet = @pw.planets[fleet.destination_planet]
-          predictions = predict_future_population(fleet_planet, fleet.turns_remaining)
-          predictions.last.mine? ? fleet_planet : nil
+          # predictions = predict_future_population(fleet_planet, fleet.turns_remaining)
+          # predictions.last.mine? ? fleet_planet : nil
         }.compact
         (@pw.my_planets + future_owned_planets).uniq
       )
@@ -197,39 +203,27 @@ class Sniperbot < AI
 
   module NumericalSuperiorityStrategy
     def numerical_superiority_strategy
-      return unless @my_population > @enemy_population
+      advantage = @my_population - @enemy_population
+      return unless advantage > 0
       if @my_growth > @enemy_growth
-        attack_enemy_planets
-      else
-        capture_nearby_planets
-      end
-    end
-
-    def capture_nearby_planets
-      advantage = @my_population - @enemy_population
-      easiest_planets_to_capture.each do |target|
-        return if advantage <= 0
-        @pw.my_closest_planets(target).each do |source|
-          return if advantage <= 0
-          next if ships_available_on(source) <= 0
-          ships_to_send = [ships_available_on(source), advantage].min
-          log "Using numerical superiority to capture nearby planets"
-          attack_with(source, target, ships_to_send)
-          advantage -= ships_to_send
-        end
-      end
-    end
-
-    def attack_enemy_planets
-      advantage = @my_population - @enemy_population
-      my_planets_by_distance_to_enemy.each do |source|
-        break if advantage <= 0
-        next if ships_available_on(source) <= 0
-        ships_to_send = [ships_available_on(source), advantage].min
-        break unless target = @pw.closest_enemy_planets(source).first
         log "Using numerical superiority to weaken the enemy"
-        attack_with(source, target, ships_to_send)
-        advantage -= ships_to_send
+        attack_with_fleet(advantage, easiest_planets_to_capture(@pw.enemy_planets, :pruning=>false))
+      else
+        log "Using numerical superiority to capture nearby planets"
+        attack_with_fleet(advantage, easiest_planets_to_capture)
+      end
+    end
+
+    def attack_with_fleet(total_ships_to_send, targets)
+      targets.each do |target|
+        return if total_ships_to_send <= 0
+        @pw.my_closest_planets(target).each do |source|
+          return if total_ships_to_send <= 0
+          next if ships_available_on(source) <= 0
+          ships_to_send = [ships_available_on(source), total_ships_to_send].min
+          attack_with(source, target, ships_to_send)
+          total_ships_to_send -= ships_to_send
+        end
       end
     end
   end

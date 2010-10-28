@@ -32,14 +32,25 @@ module Toolbox
     planets.sort_by{|planet| @pw.distance(planet, @pw.closest_enemy_planets(planet).first)}
   end
 
-  def easiest_planets_to_capture(planets=@pw.not_my_planets)
-    planets.select {|planet|
-      # Distance-based pruning: reject planets closer to enemies than to friendly planets
-      next unless my_closest_planet = @pw.my_closest_planets(planet).first
-      next unless closest_enemy_planet = @pw.closest_enemy_planets(planet).first
-      next false if @pw.distance(planet, my_closest_planet) - @pw.distance(planet, closest_enemy_planet) > 0
-      planet.growth_rate >= 1
-    }.sort_by do |planet|
+  def enemy_planets_by_distance_to_me(planets=@pw.enemy_planets)
+    return planets unless @pw.my_planets.size > 1
+    planets.sort_by{|planet| @pw.distance(planet, @pw.my_closest_planets(planet).first)}
+  end
+
+  def easiest_planets_to_capture(planets=@pw.not_my_planets, options={})
+    options = {:pruning=>true}.merge(options)
+    if options[:pruning]
+      selected_planets = planets.select {|planet|
+        # Distance-based pruning: reject planets closer to enemies than to friendly planets
+        next unless my_closest_planet = @pw.my_closest_planets(planet).first
+        next unless closest_enemy_planet = @pw.closest_enemy_planets(planet).first
+        next false if @pw.distance(planet, my_closest_planet) - @pw.distance(planet, closest_enemy_planet) > 0
+        planet.growth_rate >= 1
+      }
+    else
+      selected_planets = planets
+    end
+    selected_planets.sort_by do |planet|
       # Defensibility pruning: reject planets that are likely to be recaptured and lost
       if closest_enemy_planet = @pw.closest_enemy_planets(planet).first
         nearest_fleet = closest_enemy_planet.num_ships
