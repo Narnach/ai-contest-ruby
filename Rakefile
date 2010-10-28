@@ -115,8 +115,10 @@ class Tournament
   attr_reader :matches, :lbns, :lmns
 
   def initialize(bots, maps, turns, options={})
+    options[:random_maps] = true unless options.has_key?(:random_maps)
     @bots = bots
-    @maps = maps.shuffle
+    @maps = maps
+    @maps = @maps.shuffle if options.delete(:random_maps)
     @turns = turns
     @matches = []
     @lbns = bots.map{|bot| bot.name.length}.max
@@ -262,6 +264,7 @@ task :tournament do
   options[:bot1]=ENV["BOT1"] if ENV["BOT1"]
   options[:bot2]=ENV["BOT2"] if ENV["BOT2"]
   options[:map]=ENV["MAP"] if ENV["MAP"]
+  options[:random_maps]=false if ENV["RANDOM_MAPS"]=="false"
 
   tournament = Tournament.new(bots, maps, turns, options)
   tournament.play
