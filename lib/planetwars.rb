@@ -84,16 +84,16 @@ class PlanetWars
     (@planets-[target]).select {|planet| self.travel_time(target, planet) <= range}.sort_by {|planet| self.travel_time(target, planet)}
   end
 
-  def closest_planets(target)
-    (@planets-[target]).sort_by {|planet| self.travel_time(target, planet)}
+  def closest_planets(target, planets=@planets)
+    (planets-[target]).sort_by {|planet| self.travel_time(target, planet)}
   end
 
-  def my_closest_planets(target)
-    (@planets-[target]).select{|planet| planet.mine?}.sort_by {|planet| self.travel_time(target, planet)}
+  def my_closest_planets(target, planets=my_planets)
+    closest_planets(target, planets)
   end
 
-  def closest_enemy_planets(target)
-    (@planets-[target]).select{|planet| planet.enemy?}.sort_by {|planet| self.travel_time(target, planet)}
+  def closest_enemy_planets(target, planets=enemy_planets)
+    closest_planets(target, planets)
   end
 
   def my_fleets
