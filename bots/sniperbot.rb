@@ -157,7 +157,7 @@ class Sniperbot < AI
 
         defenders = possibly_required_defenders.max
         next if defenders <= 0
-        log "Planet #{planet.planet_id} assigns #{defenders} our of #{ships_available_on(planet)} ships to defense"
+        log "Planet #{planet.planet_id} assigns #{defenders} out of #{ships_available_on(planet)} ships to defense"
         assign_defenders(planet, defenders)
       end
 
@@ -166,6 +166,7 @@ class Sniperbot < AI
         # Explicit code to send aid seems not yet required, as Sniperbot keeps winning against all my other bots.
         # Sniping and opportunity checking code also fills in to aid where it is economical.
       end
+      log "After assigning defenders, my planets have %i ships available for attack" % @pw.my_planets.inject(0){|ships,planet| ships + ships_available_on(planet)}
     end
   end
   include ReinforceStrategy
@@ -192,6 +193,7 @@ class Sniperbot < AI
         end
         attack_with(source, target, ships_available_on(source))
       end
+      log "After supplying the front, my planets have %i ships available for attack" % @pw.my_planets.inject(0){|ships,planet| ships + ships_available_on(planet)}
     end
 
     def suppliable_planets
