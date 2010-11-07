@@ -161,10 +161,18 @@ class Sniperbot < AI
         assign_defenders(planet, defenders)
       end
 
-      in_need_of_help.each do |target|
+      in_need_of_help.sort_by{|planet| -planet.growth_rate}.each do |target|
         log "Planet #{target.planet_id} is in need of help"
-        # Explicit code to send aid seems not yet required, as Sniperbot keeps winning against all my other bots.
-        # Sniping and opportunity checking code also fills in to aid where it is economical.
+        inbound_fleets = @pw.fleets_underway_to(target)
+        max_distance = inbound_fleets.map{|f| f.turns_remaining}.max
+        predictions = predict_future_population(target, max_distance)
+        help_required = predictions.select{|future| future.enemy?}.map{|future| future.num_ships}.max + 1
+        @pw.my_closest_planets(target).each do |planet|
+          break if help_required <= 0
+          ships_to_send = [ships_available_on(planet), help_required].min
+          attack_with(planet, target, ships_to_send)
+          help_required -= ships_to_send
+        end
       end
       log "After assigning defenders, my planets have %i ships available for attack" % @pw.my_planets.inject(0){|ships,planet| ships + ships_available_on(planet)}
     end
