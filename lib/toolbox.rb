@@ -8,7 +8,18 @@ module Toolbox
 
   def log_planets
     @pw.planets.each do |planet|
-      log "Planet id %3i O:%1i P:%4i G:%2i" % [planet.planet_id, planet.owner, planet.num_ships, planet.growth_rate]
+      inbound_ships = @pw.fleets_underway_to(planet).inject(0) {|ships, f| ships + (f.mine? ? f.num_ships : -f.num_ships)}
+      warning = ""
+      if planet.mine?
+        if inbound_ships < 0
+          warning << "!"
+          if inbound_ships.abs > planet.num_ships
+            warning << "!"
+            warning << "!" unless predict_future_population(planet, @pw.fleets_underway_to(planet).map{|f| f.turns_remaining}.max).last.mine?
+          end
+        end
+      end
+      log "Planet id %3i O:%1i P:%4i G:%2i I:%4i %s" % [planet.planet_id, planet.owner, planet.num_ships, planet.growth_rate, inbound_ships, warning]
     end
   end
 
