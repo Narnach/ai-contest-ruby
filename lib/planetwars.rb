@@ -80,8 +80,8 @@ class PlanetWars
     @planets.reject {|planet| planet.owner == 1 }
   end
 
-  def nearby_planets(target, range)
-    (@planets-[target]).select {|planet| self.travel_time(target, planet) <= range}.sort_by {|planet| self.travel_time(target, planet)}
+  def nearby_planets(target, range, planets=@planets)
+    (planets-[target]).select {|planet| self.travel_time(target, planet) <= range}.sort_by {|planet| self.travel_time(target, planet)}
   end
 
   def closest_planets(target, planets=@planets)

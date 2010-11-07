@@ -146,7 +146,12 @@ class Sniperbot < AI
         if closest_enemy
           available_ships = predictions[distance_to_closest_enemy].num_ships - closest_enemy.num_ships
           available_ships = 0 if available_ships < 0
-          # TODO: Discount all ships available for defense on planets closer than the closest enemy. This should prevent 'freezing' behaviour when my total population is larger, but individual planets are smaller than my enemy.
+          # Discount all ships available for defense on planets closer than the closest enemy.
+          # This should prevent 'freezing' behaviour when my total population is larger, but individual planets are smaller than my closest enemy.
+          ships_on_nearby_friendly_planets = @pw.nearby_planets(planet, distance_to_closest_enemy, @pw.my_planets).inject(0) do |ships, friendly_planet|
+            ships + ships_available_on(friendly_planet)
+          end
+          available_ships += ships_on_nearby_friendly_planets
           possibly_required_defenders << (ships_for_defense_of(planet) - [available_ships, ships_available_on(planet)].min)
         end
 
