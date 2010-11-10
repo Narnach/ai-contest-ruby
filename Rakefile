@@ -17,6 +17,7 @@ end
 
 BOTS = Dir.glob("bots/*.rb").map{|file| File.basename(file).gsub(".rb","")}
 SUBMISSION_BOTS = Dir.glob("submissions/*/MyBot.rb")
+RECENT_SUBMISSION_BOTS = SUBMISSION_BOTS.sort_by {|file| file.match(/v(\d+)/)[1].to_i}[-5..-1]
 ALL_BOTS = BOTS + SUBMISSION_BOTS
 MAPS = Dir.glob("maps/*.txt")
 LBNS = BOTS.map{|bot| bot.size}.sort.last
@@ -195,13 +196,13 @@ end
 
 desc 'Play current bot against old bots'
 task :prezip_tournament do
-  bots = SUBMISSION_BOTS
+  bots = RECENT_SUBMISSION_BOTS
   if bots.size == 0
     puts "No bots found. Please run 'rake submissions'. This will reset your git branch a couple of times, so commit your changes first."
     exit 1
   end
   maps = MAPS
-  turns = [(ENV['TURNS'] || bots.size * 10).to_i, 50].min
+  turns = (ENV['TURNS'] || bots.size * 10).to_i
   options={:bot1=>"./MyBot.rb"}
   options[:bot1]=ENV['BOT1'] if ENV['BOT1']
   options[:verbose]=true if ENV['VERBOSE']
