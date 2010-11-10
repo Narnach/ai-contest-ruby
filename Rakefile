@@ -17,7 +17,7 @@ end
 
 BOTS = Dir.glob("bots/*.rb").map{|file| File.basename(file).gsub(".rb","")}
 SUBMISSION_BOTS = Dir.glob("submissions/*/MyBot.rb")
-RECENT_SUBMISSION_BOTS = SUBMISSION_BOTS.sort_by {|file| file.match(/v(\d+)/)[1].to_i}[-5..-1]
+RECENT_SUBMISSION_BOTS = SUBMISSION_BOTS.sort_by {|file| file.match(/v(\d+)/)[1].to_i}[(-(ENV['RECENT']||5).to_i)..-1]
 ALL_BOTS = BOTS + SUBMISSION_BOTS
 MAPS = Dir.glob("maps/*.txt")
 LBNS = BOTS.map{|bot| bot.size}.sort.last
