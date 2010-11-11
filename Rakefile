@@ -158,8 +158,10 @@ class Tournament
 
       matches << match
       if match[:winner]
-        win_pct = match_stats(matches).find{|match_stat| match_stat[0] == match[:winner].name}[5]
-        puts "Game %#{turns.to_s.size}i: Victory by %#{lbns}s against %#{lbns}s on %#{lmns}s (turn %3i), wins %3i%%" % [turn, match[:winner].name, match[:loser].name, map, match[:turns], win_pct]
+        winner_match_stats = match_stats(matches).find{|match_stat| match_stat[0] == match[:winner].name}
+        win_pct = winner_match_stats[5]
+        lose_pct = 100.0 * winner_match_stats[3] / winner_match_stats[4]
+        puts "Game %#{turns.to_s.size}i: Victory by %#{lbns}s against %#{lbns}s on %#{lmns}s (turn %3i), wins %3i%%, loses %3i%%" % [turn, match[:winner].name, match[:loser].name, map, match[:turns], win_pct, lose_pct]
       else
         puts "Game %#{turns.to_s.size}i: A draw for %#{lbns}s against %#{lbns}s on %#{lmns}s" % [turn, bot1.name, bot2.name, map]
       end
