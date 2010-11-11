@@ -12,7 +12,8 @@ class Sniperbot < AI
   # v8: Treat planets that get invaded as if they were my own: defend them and supply them
   # v9: Don't attack planets not worth capturing, defend all planets that get invaded
   # v10: Added DesperateAllOutAttackStrategy
-  version 10
+  # v11: Execute DesperateAllOutAttackStrategy before supplying planets: adds more punch
+  version 11
 
   def do_turn
     super
