@@ -156,12 +156,13 @@ class Tournament
       game = Playgame.new(DEFAULT_OPTIONS.merge(options).merge(:map=>map, :bot1=>bot1, :bot2=>bot2, :analyze=>true, :raw_output=>true, :logfile=>"tournament_game_#{turn}.log"))
       match = game.run
 
+      matches << match
       if match[:winner]
-        puts "Game %#{turns.to_s.size}i: Victory by %#{lbns}s against %#{lbns}s on %#{lmns}s (turn %3i)" % [turn, match[:winner].name, match[:loser].name, map, match[:turns]]
+        win_pct = match_stats(matches).find{|match_stat| match_stat[0] == match[:winner].name}[5]
+        puts "Game %#{turns.to_s.size}i: Victory by %#{lbns}s against %#{lbns}s on %#{lmns}s (turn %3i), wins %3i%%" % [turn, match[:winner].name, match[:loser].name, map, match[:turns], win_pct]
       else
         puts "Game %#{turns.to_s.size}i: A draw for %#{lbns}s against %#{lbns}s on %#{lmns}s" % [turn, bot1.name, bot2.name, map]
       end
-      matches << match
     }
   end
 
@@ -170,10 +171,10 @@ class Tournament
   end
 
   protected
-
-  def tournament_stats(matches)
+  
+  def match_stats(matches)
     bots = matches.map {|match| [match[:winner], match[:loser]]}.flatten.compact.uniq.sort
-    match_stats = bots.map do |bot|
+    bots.map do |bot|
       bot_matches = matches.select{|match| match[:p1] == bot or match[:p2] == bot}
       plays = bot_matches.size
       wins = bot_matches.select{|match| match[:winner] == bot}.size
@@ -182,7 +183,10 @@ class Tournament
       win_pct = plays > 0 ? 100.0 * wins / plays : 0
       next [bot.name, wins, draws, losses, plays, win_pct]
     end
-    match_stats.sort_by {|bot_match| 100-bot_match.last}.each do |stats|
+  end
+
+  def tournament_stats(matches)
+    match_stats(matches).sort_by {|bot_match| 100-bot_match.last}.each do |stats|
       puts "%#{lbns}s: %#{turns.to_s.size}i/%#{turns.to_s.size}i/%#{turns.to_s.size}i (%#{turns.to_s.size}i games, %3i%% wins)" % stats
     end
   end
