@@ -22,12 +22,12 @@ class Sniperbot < AI
     sniper_strategy
     # Attack targets that are a good investment: nearby, reachable and not well defended
     opportunity_strategy
+    # When behind numbers-wise, attack all-out and hope for the best
+    desperate_all_out_attack_strategy
     # When there are ships left, send them to a planet closer to the front-lines
     supply_the_front_strategy
     # Based on where we are numbers-wise, grab more planets or attack the enemy
     numerical_superiority_strategy
-    # When behind numbers-wise, attack all-out and hope for the best
-    desperate_all_out_attack_strategy
   end
 
   protected
