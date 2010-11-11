@@ -15,7 +15,9 @@ module Toolbox
           warning << "!"
           if inbound_ships.abs > planet.num_ships
             warning << "!"
-            warning << "!" unless predict_future_population(planet, @pw.fleets_underway_to(planet).map{|f| f.turns_remaining}.max).last.mine?
+            predictions = predict_future_population(planet, @pw.fleets_underway_to(planet).map{|f| f.turns_remaining}.max)
+            warning << "!" unless predictions.last.mine?
+            warning << " [#{predictions.map{|f| f.mine? ? f.num_ships : -f.num_ships}.join(", ")}]"
           end
         end
       end
