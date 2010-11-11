@@ -38,7 +38,7 @@ class Sniperbot < AI
 
     # Find all potentially sniper-able planets
     def potential_sniper_targets
-      @pw.enemy_fleets.map{|fleet| [fleet.destination_planet, fleet.source_planet]}.flatten.uniq.map{|planet_id| @pw.planets[planet_id]}
+      easiest_planets_to_capture & @pw.enemy_fleets.map{|fleet| [fleet.destination_planet, fleet.source_planet]}.flatten.uniq.map{|planet_id| @pw.planets[planet_id]}
     end
 
     # The best sniper targets are planets that will be conquered by the enemy's fleets,
