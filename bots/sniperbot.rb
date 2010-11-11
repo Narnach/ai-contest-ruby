@@ -11,7 +11,8 @@ class Sniperbot < AI
   # v7: Adjusted target finding algorithms
   # v8: Treat planets that get invaded as if they were my own: defend them and supply them
   # v9: Don't attack planets not worth capturing, defend all planets that get invaded
-  version 9
+  # v10: Added DesperateAllOutAttackStrategy
+  version 10
 
   def do_turn
     super
@@ -25,6 +26,8 @@ class Sniperbot < AI
     supply_the_front_strategy
     # Based on where we are numbers-wise, grab more planets or attack the enemy
     numerical_superiority_strategy
+    # When behind numbers-wise, attack all-out and hope for the best
+    desperate_all_out_attack_strategy
   end
 
   protected
@@ -225,7 +228,7 @@ class Sniperbot < AI
         attack_with_fleet(advantage, easiest_planets_to_capture(@pw.enemy_planets, :pruning=>false))
       else
         log "Using numerical superiority to capture nearby planets"
-        attack_with_fleet(advantage, easiest_planets_to_capture)
+        attack_with_fleet(advantage, easiest_planets_to_capture(@pw.enemy_planets))
       end
     end
 
@@ -243,4 +246,52 @@ class Sniperbot < AI
     end
   end
   include NumericalSuperiorityStrategy
+
+  module DesperateAllOutAttackStrategy
+    def desperate_all_out_attack_strategy
+      return unless my_situation_is_desperate?
+      log "Situation is desperate! Performing all out attack"
+      perform_all_out_attack
+    end
+
+    protected
+
+    def perform_all_out_attack
+      @pw.my_planets.each do |planet|
+        assign_defenders(planet, 0)
+        break unless closest_enemy = @pw.closest_enemy_planets(planet).first
+        ships_to_send = ships_available_on(planet)
+        next if ships_to_send <= 0
+        attack_with(planet, closest_enemy, ships_to_send)
+      end
+    end
+
+    def my_situation_is_desperate?
+      if @my_growth >= @enemy_growth || @my_population >= @enemy_population
+        log "My current state is not desperate"
+        return false
+      end
+      relevant_planets = @pw.my_planets + @pw.enemy_planets + (@pw.neutral_planets & @pw.fleets.map{|fleet| fleet.destination_planet}.uniq.map{|planet_id| @pw.planets[planet_id]})
+      turns_to_predict = [@pw.fleets.map{|fleet| fleet.turns_remaining}.max||10, 200 - @turn].compact.min
+      if turns_to_predict <= 0
+        log "Turns to predict would not be positive"
+        return false
+      end
+      planet_futures = relevant_planets.map{|planet| predict_future_population(planet, turns_to_predict)}
+      last_futures = planet_futures.map{|futures| futures.last}
+      my_growth = last_futures.select{|future|future.mine?}.inject(0){|sum, future| sum + future.growth_rate}
+      my_population = last_futures.select{|future|future.mine?}.inject(0){|sum, future| sum + future.num_ships}
+      enemy_growth = last_futures.select{|future|future.enemy?}.inject(0){|sum, future| sum + future.growth_rate}
+      enemy_population = last_futures.select{|future|future.enemy?}.inject(0){|sum, future| sum + future.num_ships}
+      log "Future predictions in #{turns_to_predict} turns:"
+      log "Me:      T:%4i G:%3i" % [my_population, my_growth]
+      log "Them:    T:%4i G:%3i" % [enemy_population, enemy_growth]
+      if my_growth >= enemy_growth || my_population >= enemy_population
+        log "Predicted future is not desperate"
+        return false
+      end
+      return true
+    end
+  end
+  include DesperateAllOutAttackStrategy
 end
