@@ -10,7 +10,8 @@ class Sniperbot < AI
   # v6: Added NumericalSuperiorityStrategy
   # v7: Adjusted target finding algorithms
   # v8: Treat planets that get invaded as if they were my own: defend them and supply them
-  version 8
+  # v9: Don't attack planets not worth capturing, defend all planets that get invaded
+  version 9
 
   def do_turn
     super
