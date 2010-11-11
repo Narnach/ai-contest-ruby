@@ -135,9 +135,6 @@ class Sniperbot < AI
         if predictions.all? {|future| future.mine?}
           available_ships = predictions.map{|future| future.num_ships}.min
           possibly_required_defenders << (ships_for_defense_of(planet) - available_ships)
-        elsif predictions.last.mine?
-          # Ownerships will flip back and forth, so keep all ships as defense force
-          possibly_required_defenders << ships_for_defense_of(planet)
         else
           possibly_required_defenders << ships_for_defense_of(planet)
           in_need_of_help << planet
@@ -170,6 +167,7 @@ class Sniperbot < AI
         @pw.my_closest_planets(target).each do |planet|
           break if help_required <= 0
           ships_to_send = [ships_available_on(planet), help_required].min
+          next if ships_to_send <= 0
           attack_with(planet, target, ships_to_send)
           help_required -= ships_to_send
         end
