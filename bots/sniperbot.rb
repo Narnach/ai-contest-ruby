@@ -13,7 +13,8 @@ class Sniperbot < AI
   # v9: Don't attack planets not worth capturing, defend all planets that get invaded
   # v10: Added DesperateAllOutAttackStrategy
   # v11: Execute DesperateAllOutAttackStrategy before supplying planets: adds more punch
-  version 11
+  # v12: DesperateAllOutAttackStrategy kicks in later
+  version 12
 
   def do_turn
     super
@@ -268,7 +269,7 @@ class Sniperbot < AI
     end
 
     def my_situation_is_desperate?
-      if @my_growth >= @enemy_growth || @my_population >= @enemy_population
+      unless @my_growth < @enemy_growth && @my_population < @enemy_population * 0.75
         log "My current state is not desperate"
         return false
       end
@@ -287,7 +288,7 @@ class Sniperbot < AI
       log "Future predictions in #{turns_to_predict} turns:"
       log "Me:      T:%4i G:%3i" % [my_population, my_growth]
       log "Them:    T:%4i G:%3i" % [enemy_population, enemy_growth]
-      if my_growth >= enemy_growth || my_population >= enemy_population
+      unless my_growth < enemy_growth && my_population < enemy_population * 0.75
         log "Predicted future is not desperate"
         return false
       end
