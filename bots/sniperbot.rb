@@ -18,14 +18,14 @@ class Sniperbot < AI
 
   def do_turn
     super
+    # When behind numbers-wise, attack all-out and hope for the best
+    desperate_all_out_attack_strategy
     # Set defenders for my own planets and send aid to help planets under attack
     reinforce_strategy
     # Attack targets that can be conquered by a low amount of ships, for example by striking right after my opponent captures a neutral planet
     sniper_strategy
     # Attack targets that are a good investment: nearby, reachable and not well defended
     opportunity_strategy
-    # When behind numbers-wise, attack all-out and hope for the best
-    desperate_all_out_attack_strategy
     # When there are ships left, send them to a planet closer to the front-lines
     supply_the_front_strategy
     # Based on where we are numbers-wise, grab more planets or attack the enemy
@@ -259,10 +259,10 @@ class Sniperbot < AI
     protected
 
     def perform_all_out_attack
+      clear_defenders
       @pw.my_planets.each do |planet|
-        assign_defenders(planet, 0)
         break unless closest_enemy = @pw.closest_enemy_planets(planet).first
-        ships_to_send = ships_available_on(planet)
+        ships_to_send = ships_for_defense_of(planet)
         next if ships_to_send <= 0
         attack_with(planet, closest_enemy, ships_to_send)
       end

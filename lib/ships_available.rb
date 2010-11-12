@@ -20,6 +20,13 @@ module ShipsAvailable
   def reset_defenders
     @defenders = Hash.new { |hash, key| hash[key] = 0 }
   end
+  
+  def clear_defenders
+    @defenders.each do |planet_id, defenders|
+      @ships_available[planet_id] += defenders
+    end
+    @defenders.clear
+  end
 
   def can_attack?(source, num_ships)
     @ships_available[source.planet_id] >= num_ships
