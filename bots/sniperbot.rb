@@ -13,7 +13,7 @@ class Sniperbot < AI
   # v9: Don't attack planets not worth capturing, defend all planets that get invaded
   # v10: Added DesperateAllOutAttackStrategy
   # v11: Execute DesperateAllOutAttackStrategy before supplying planets: adds more punch
-  # v12: DesperateAllOutAttackStrategy kicks in later
+  # v12: DesperateAllOutAttackStrategy kicks in later, capture planet algorithm accounts for distance to friendly planets
   version 12
 
   def do_turn

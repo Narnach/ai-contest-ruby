@@ -72,7 +72,17 @@ module Toolbox
         nearest_fleet = 0
         regen_until_enemy_arrives = 0
       end
-      (planet.num_ships + nearest_fleet - regen_until_enemy_arrives) / planet.growth_rate
+      if closest_friendly_planet = @pw.my_closest_planets(planet).first
+        distance_to_friendly = @pw.travel_time(planet, closest_friendly_planet)
+      else
+        distance_to_friendly = 0
+      end
+      # Lower score means more desirable
+      # Higher growth means the total score will be lower
+      # Longer distance to travel is less desirable, so should increase score
+      # Longer distance from enemy planets decreases score as it is more defensible
+      next 0 if planet.growth_rate == 0
+      (planet.num_ships + nearest_fleet - regen_until_enemy_arrives + (distance_to_friendly*planet.growth_rate)) / planet.growth_rate
     end
   end
 
