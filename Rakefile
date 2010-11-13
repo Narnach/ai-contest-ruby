@@ -281,6 +281,8 @@ task :tournament do
     bots = GOOD_BOTS
   when 'recent'
     bots = RECENT_SUBMISSION_BOTS
+  when 'submissions'
+    bots = SUBMISSION_BOTS
   when 'all'
     bots = ALL_BOTS
   else
