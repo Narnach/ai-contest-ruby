@@ -42,7 +42,9 @@ module ShipsAvailable
   end
 
   def assign_defenders(planet, num_ships)
+    return if num_ships == 0
     if ships_available_on(planet) >= num_ships
+      log "Assigning #{num_ships} defenders to planet #{planet.planet_id}"
       @defenders[planet.planet_id] = num_ships
       @ships_available[planet.planet_id] -= num_ships
     else
