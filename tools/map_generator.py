@@ -3,15 +3,28 @@
 import math
 import random
 
+# minimum and maximum total number of planets in map
 minPlanets = 15
 maxPlanets = 30
+# maximum number of planets located equidistant from both players
+# not including the planet exactly in the center of the map
+maxCentral = 5
+# minimum and maximum number of ships on neutral planets
 minShips = 1
 maxShips = 100
+# minimum and maximum growth for planets
+# except for the center planet which is always 0 minimum growth
 minGrowth = 1
 maxGrowth = 5
+# minimum distance between planets
 minDistance = 2
+# minimum distance between the players starting planets
 minStartingDistance = 4
+# maximum radius from center of map a planet can be
 maxRadius = 12
+# minimum difference between true distance and rounded distance between planets
+# this is to try and avoid rounding errors causing different distances to be
+# calculated on different platforms and languages
 epsilon = 0.002
 
 def make_planet(x, y, owner, num_ships, growth_rate):
@@ -107,7 +120,6 @@ generate_coordinates(p2, r, theta2)
 
 while not_valid(p1, p2) or distance(p1, p2) < minStartingDistance:
     r = rand_radius(minDistance, maxRadius)
-
     theta1 = rand_num(0, 360)
     if symmetryType == 1 and theta1 < 180:
         theta2 = theta1+180
@@ -124,7 +136,7 @@ planetsToGenerate -= 2
 
 #makes the center neutral planets
 if symmetryType == 1:
-    noCenterNeutrals = 2*random.randint(0, 2)
+    noCenterNeutrals = 2*random.randint(0, maxCentral/2)
     thetaA = (theta1+theta2)/2
     thetaB = thetaA + 180
     for i in range(noCenterNeutrals/2):
@@ -143,10 +155,9 @@ if symmetryType == 1:
         planets.append(p2)
         planetsToGenerate -= 2
 else:
-    noCenterNeutrals = random.randint(0, 4)
     # must have an even number of planets left to generate after this
-    if (planetsToGenerate - noCenterNeutrals) % 2 == 1:
-        noCenterNeutrals = (noCenterNeutrals + 1) % 5
+    minCentral = planetsToGenerate % 2
+    noCenterNeutrals = random.randrange(minCentral, maxCentral+1, 2)
     theta = (theta1+theta2)/2
     if random.randint(0, 1) == 1:
         theta += 180
@@ -163,7 +174,7 @@ else:
         planetsToGenerate -= 1
 
 #picks out the rest of the neutral planets
-assert planetsToGenerate % 2 == 0, "Odd number of planets left to add"
+assert planetsToGenerate % 2 == 0, "Error: odd number of planets left to add"
 for i in range(planetsToGenerate/2):
     r = rand_radius(minDistance, maxRadius)
     theta = rand_num(0, 360)
