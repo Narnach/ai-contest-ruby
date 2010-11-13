@@ -9,6 +9,7 @@ end
 class String
   # Used to call bot.name, pretty-printing a bot's name
   def name
+    return self.gsub(/submissions\/|\/MyBot\.rb/,"") if self =~ /^submissions\/v\d+\/MyBot\.rb$/
     name = self.gsub("./","").gsub(".rb","")
     name = name.gsub("Mybot","") if name =~ /Mybot \w+/
     name.strip
@@ -16,7 +17,7 @@ class String
 end
 
 BOTS = Dir.glob("bots/*.rb").map{|file| File.basename(file).gsub(".rb","")}
-SUBMISSION_BOTS = Dir.glob("submissions/*/MyBot.rb")
+SUBMISSION_BOTS = Dir.glob("submissions/*/MyBot.rb").map{|file| file.gsub(/submissions\/|\/MyBot\.rb/,"")}
 RECENT_SUBMISSION_BOTS = SUBMISSION_BOTS.sort_by {|file| file.match(/v(\d+)/)[1].to_i}[(-(ENV['RECENT']||5).to_i)..-1]
 ALL_BOTS = BOTS + SUBMISSION_BOTS
 GOOD_BOTS = RECENT_SUBMISSION_BOTS + %w[sniperbot grower seer toolbot speed]
@@ -49,6 +50,8 @@ class Playgame
     final_options.each do |k,v|
       self.send("#{k}=",v)
     end
+    self.bot1 = "submissions/#{self.bot1}/MyBot.rb" if self.bot1.to_s =~ /^v\d+$/
+    self.bot2 = "submissions/#{self.bot2}/MyBot.rb" if self.bot2.to_s =~ /^v\d+$/
     self.bot1 = "./Mybot.rb #{self.bot1}" if !File.exist?(self.bot1) && !self.bot1.include?(" ") && !File.exist?(self.bot1.split(" ").first)
     self.bot2 = "./Mybot.rb #{self.bot2}" if !File.exist?(self.bot2) && !self.bot2.include?(" ") && !File.exist?(self.bot2.split(" ").first)
     unless File.exist?(self.map)
