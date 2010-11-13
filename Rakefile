@@ -50,7 +50,15 @@ class Playgame
     end
     self.bot1 = "./Mybot.rb #{self.bot1}" unless File.exist?(self.bot1)
     self.bot2 = "./Mybot.rb #{self.bot2}" unless File.exist?(self.bot2)
-    self.map  = "maps/map#{self.map}.txt" unless File.exist?(self.map)
+    unless File.exist?(self.map)
+      if self.map.to_s=~/^\d+$/
+        self.map  = "maps/map#{self.map}.txt"
+      elsif self.map.to_s=~/^t(est)?\d+$/
+        self.map  = "maps/testmap#{self.map.gsub(/\D+/,'')}.txt"
+      else
+        raise "Unknown map: #{self.map}"
+      end
+    end
     # Use debug as a flag to override debug1 and debug2, unless they are explicitly set
     self.debug=true if ENV['DEBUG']=='true'
     self.debug1=true if self.debug && !options.has_key?(:debug1)
