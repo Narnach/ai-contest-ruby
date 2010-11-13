@@ -48,8 +48,8 @@ class Playgame
     final_options.each do |k,v|
       self.send("#{k}=",v)
     end
-    self.bot1 = "./Mybot.rb #{self.bot1}" unless File.exist?(self.bot1)
-    self.bot2 = "./Mybot.rb #{self.bot2}" unless File.exist?(self.bot2)
+    self.bot1 = "./Mybot.rb #{self.bot1}" if !File.exist?(self.bot1) && !self.bot1.include?(" ") && !File.exist?(self.bot1.split(" ").first)
+    self.bot2 = "./Mybot.rb #{self.bot2}" if !File.exist?(self.bot2) && !self.bot2.include?(" ") && !File.exist?(self.bot2.split(" ").first)
     unless File.exist?(self.map)
       if self.map.to_s=~/^\d+$/
         self.map  = "maps/map#{self.map}.txt"
