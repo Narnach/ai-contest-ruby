@@ -14,13 +14,13 @@ module ShipsAvailable
   end
 
   def reset_fleets_dispatched
-    @fleets_dispatched = Hash.new { |hash, key| hash[key] = Array.new }
+    fleets_dispatched = nil
   end
 
   def reset_defenders
     @defenders = Hash.new { |hash, key| hash[key] = 0 }
   end
-  
+
   def clear_defenders
     @defenders.each do |planet_id, defenders|
       @ships_available[planet_id] += defenders
@@ -38,7 +38,7 @@ module ShipsAvailable
 
   def dispatch_fleet(source, target, num_ships)
     distance = @pw.travel_time(source, target)
-    @fleets_dispatched[target.planet_id] << Fleet.new(source.owner, num_ships, source.planet_id, target.planet_id, distance, distance)
+    fleets_dispatched[target.planet_id] << Fleet.new(source.owner, num_ships, source.planet_id, target.planet_id, distance, distance)
   end
 
   def assign_defenders(planet, num_ships)
@@ -63,5 +63,11 @@ module ShipsAvailable
     else
       log "!!! BUG !!! Wanted to send #{num_ships} from #{source.planet_id} to #{target.planet_id}, while there are only #{ships_available_on(source)} available!"
     end
+  end
+
+  protected
+
+  def fleets_dispatched
+    @fleets_dispatched ||= Hash.new { |hash, key| hash[key] = Array.new }
   end
 end

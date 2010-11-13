@@ -20,6 +20,18 @@ module Toolbox
             warning << " [#{predictions.map{|f| f.mine? ? f.num_ships : -f.num_ships}.join(", ")}]"
           end
         end
+      elsif nearest_planet = @pw.my_closest_planets(planet).first
+        distance = @pw.travel_time(planet, nearest_planet)
+        invasion_fleet = ships_needed_to_capture(planet, distance)
+        if invasion_fleet > 0
+          turns_needed_to_regenerate = planet.growth_rate > 0 ? (invasion_fleet.to_f / planet.growth_rate).ceil : -1
+          turns_invested = turns_needed_to_regenerate >= 0 ? distance + turns_needed_to_regenerate : -0
+          warning = "[Invasion: D:%2i F:%4i T:%3i]" % [distance, invasion_fleet, turns_invested]
+        else
+          predictions = predict_future_population(planet, distance)
+          victory_turn = predictions.find{|future| future.mine?}
+          warning = "[Invasion in %i turns]" % [predictions.index(victory_turn)+1]
+        end
       end
       log "Planet id %3i O:%1i P:%4i G:%2i I:%4i %s" % [planet.planet_id, planet.owner, planet.num_ships, planet.growth_rate, inbound_ships, warning]
     end
@@ -88,7 +100,7 @@ module Toolbox
 
   def predict_future_population(target, turns=nil)
     predictions = [target.clone]
-    inbound_fleets = @pw.fleets_underway_to(target) + @fleets_dispatched[target.planet_id]
+    inbound_fleets = @pw.fleets_underway_to(target) + fleets_dispatched[target.planet_id]
     turns ||= inbound_fleets.map(&:turns_remaining).max || 0
     1.upto(turns) do |n|
       last_turn = predictions[n-1]
