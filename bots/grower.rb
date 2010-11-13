@@ -10,10 +10,12 @@ class Grower < AI
   def do_turn
     super
 
-    easiest_planets_to_capture.each do |target|
+    easiest_planets_to_capture(@pw.not_my_planets, :pruning=>false).each do |target|
       @pw.my_closest_planets(target).each do |source|
         distance = @pw.travel_time(target, source)
-        futures = predict_future_population(target, distance)
+        inbound_fleets = @pw.fleets_underway_to(target) + fleets_dispatched[target.planet_id]
+        turns = [inbound_fleets.map(&:turns_remaining).max, distance].compact.max
+        futures = predict_future_population(target, turns)
         next if futures.last.mine?
         ships_to_send = futures.last.num_ships + 1
         next if ships_to_send <= 0
