@@ -147,7 +147,7 @@ class PlanetWars
       tokens = line.split(" ")
       next if tokens.length == 1
       if tokens[0] == "P"
-        return 0 if tokens.length != 6
+        return false if tokens.length != 6
         p = Planet.new(planet_id,
                        tokens[3].to_i, # owner
                        tokens[4].to_i, # num_ships
@@ -157,7 +157,7 @@ class PlanetWars
         planet_id += 1
         @planets << p
       elsif tokens[0] == "F"
-        return 0 if tokens.length != 7
+        return false if tokens.length != 7
         f = Fleet.new(tokens[1].to_i, # owner
                       tokens[2].to_i, # num_ships
                       tokens[3].to_i, # source
@@ -166,10 +166,10 @@ class PlanetWars
                       tokens[6].to_i) # turns_remaining
         @fleets << f
       else
-        return 0
+        return false
       end
     end
-    return 1
+    return true
   end
 
   def finish_turn
