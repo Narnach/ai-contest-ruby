@@ -19,6 +19,7 @@ BOTS = Dir.glob("bots/*.rb").map{|file| File.basename(file).gsub(".rb","")}
 SUBMISSION_BOTS = Dir.glob("submissions/*/MyBot.rb")
 RECENT_SUBMISSION_BOTS = SUBMISSION_BOTS.sort_by {|file| file.match(/v(\d+)/)[1].to_i}[(-(ENV['RECENT']||5).to_i)..-1]
 ALL_BOTS = BOTS + SUBMISSION_BOTS
+GOOD_BOTS = RECENT_SUBMISSION_BOTS + %w[sniperbot grower seer toolbot speed]
 MAPS = Dir.glob("maps/*.txt")
 LBNS = BOTS.map{|bot| bot.size}.sort.last
 LMNS = MAPS.map{|map| map.size}.sort.last
@@ -272,7 +273,16 @@ end
 
 desc "Run a tournament of random matchups. Set TURNS to change the turn count it from the number of maps."
 task :tournament do
-  bots = BOTS
+  case ENV['BOTS']
+  when 'good'
+    bots = GOOD_BOTS
+  when 'recent'
+    bots = RECENT_SUBMISSION_BOTS
+  when 'all'
+    bots = ALL_BOTS
+  else
+    bots = BOTS
+  end
   maps = MAPS
   turns = (ENV['TURNS'] || bots.size * 5).to_i
   options = {}
