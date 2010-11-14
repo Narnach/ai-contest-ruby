@@ -47,3 +47,10 @@ The readme contains notes with observations from live / TCP matches on weaknesse
 * Focus only on growth
   * Capture planets with a future prediction of a high number of turns, such as 50.
   * Do global future predictions. In 20 turns, am I ahead ship and growth-wise?
+* Model the universe as areas of influence (AoI).
+  * Besides picking high-growth planets, also try to prioritize the planets that increase my AoI. 
+  * Planets within my AoI are always safe to capture, so they can be delayed by a little bit.
+  * Picking off enemy planets that are over-extended should be prioritized highest, then capturing AoI-enlarging ones.
+  * When there are no targets left within my own sphere of influence, then it is either time to start attacking my enemy or I have lost.
+  * AoI can be modeled simply by using distances, but how many ships each player can get to each planet in X turns is also a very good model. This indicates defensibility of positions.
+* Data needs to be accessible in a more object-oriented fashion. A lot of my helper methods operate in a functional fashion, repeating complex data retrieval loops multiple times because I want to use the data in different ways and in different places.
