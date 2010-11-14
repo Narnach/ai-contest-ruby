@@ -262,11 +262,14 @@ task :release => [:prezip_tournament] do
   Rake::Task['tag'].invoke
 end
 
+file "./tcp" do
+  system "gcc tcp.c -o tcp"
+end
+
 desc "Run the current default bot against the TCP server. Requires ./tcp to be compiled"
-task :tcp do
+task :tcp => "./tcp" do
   player = 'narnach'
   password = 'nartest123'
-  system "gcc tcp.c -o tcp"
   bot = ENV['BOT'] || ''
   if bot != '' && !File.exist?("bots/#{bot}.rb")
     puts "Bot #{bot} does not exist"
