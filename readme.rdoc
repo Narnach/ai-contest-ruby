@@ -53,4 +53,5 @@ The readme contains notes with observations from live / TCP matches on weaknesse
   * Picking off enemy planets that are over-extended should be prioritized highest, then capturing AoI-enlarging ones.
   * When there are no targets left within my own sphere of influence, then it is either time to start attacking my enemy or I have lost.
   * AoI can be modeled simply by using distances, but how many ships each player can get to each planet in X turns is also a very good model. This indicates defensibility of positions.
+    * AoI modeling with ships can also aid in determining how many ships each planet has available: the potential amount of ships should never become negative. This can aid in determining targets: let ships 'flow' from positive to negative planets. Combined with predictions of actual ships counts, growths and fleets, this makes a good forecasting model.
 * Data needs to be accessible in a more object-oriented fashion. A lot of my helper methods operate in a functional fashion, repeating complex data retrieval loops multiple times because I want to use the data in different ways and in different places.
