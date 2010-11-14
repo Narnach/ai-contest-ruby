@@ -25,6 +25,9 @@ MAPS = Dir.glob("maps/*.txt")
 LBNS = BOTS.map{|bot| bot.size}.sort.last
 LMNS = MAPS.map{|map| map.size}.sort.last
 TAGS = `git tag -l`.split("\n").map{|tag| tag.strip}
+TCP_SERVER = "zeroviz.us" # "72.44.46.68"
+TCP_SERVER_PORT = "9999" # "995"
+TCP_SERVER_STATS_PORT = "8080"
 
 class Playgame
   DEFAULT_OPTIONS = {
@@ -270,8 +273,8 @@ task :tcp do
     exit 1
   end
   debug = ENV['DEBUG'] ? " -v " : ""
-  system "./tcp 72.44.46.68 995 #{player} -p #{password} ./MyBot.rb #{bot} #{debug} --stderr"
-  system %Q[open "http://72.44.46.68/getplayer?player=#{player}"]
+  system "./tcp #{TCP_SERVER} #{TCP_SERVER_PORT} #{player} -p #{password} ./MyBot.rb #{bot} #{debug} --stderr"
+  system %Q[open "http://#{TCP_SERVER}:#{TCP_SERVER_STATS_PORT}/getplayer?player=#{player}"]
 end
 
 desc "Run a tournament of random matchups. Set TURNS to change the turn count it from the number of maps."
