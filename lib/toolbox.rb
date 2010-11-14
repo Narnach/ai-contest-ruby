@@ -4,6 +4,7 @@ module Toolbox
   def do_turn
     super
     self.log_planets
+    self.analyze_map
   end
 
   def log_planets
@@ -34,6 +35,37 @@ module Toolbox
         end
       end
       log "Planet id %3i O:%1i P:%4i G:%2i I:%4i %s" % [planet.planet_id, planet.owner, planet.num_ships, planet.growth_rate, inbound_ships, warning]
+    end
+  end
+
+  def analyze_map
+    log "Planets closer to me than to enemy:"
+    planets_closer_to_me_than_to_enemy.each do |planet|
+      if planet.enemy?
+        log "Planet #{planet.planet_id} is an enemy, but is over-extended. Very valuable target because the enemy can't take it back in time."
+      else
+        next log("Planet #{planet.planet_id} has no close friendly planets, this means I have no planets.") unless closest_friendly = @pw.my_closest_planets(planet).first
+        next log("Planet #{planet.planet_id} has no close enemy planets, this means they have no planets.") unless closest_enemy = @pw.closest_enemy_planets(planet).first
+        friendly_distance = @pw.travel_time(planet, closest_friendly)
+        enemy_distance = @pw.travel_time(planet, closest_enemy)
+        diff = friendly_distance - enemy_distance
+        if diff == 0
+          distance_indication = "equally far from both players"
+        elsif diff < 0
+          distance_indication = "#{diff.abs} turns closer to my planets"
+        else
+          distance_indication = "#{diff} turns closer to my enemy's planets"
+        end
+        log "Planet #{planet.planet_id} is #{distance_indication}, at distance #{friendly_distance} from me and #{enemy_distance} from the enemy."
+      end
+    end
+  end
+
+  def planets_closer_to_me_than_to_enemy
+    @pw.not_my_planets.select do |planet|
+      next false unless closest_friendly = @pw.my_closest_planets(planet).first
+      next true unless closest_enemy = @pw.closest_enemy_planets(planet).first
+      @pw.travel_time(planet, closest_friendly) <= @pw.travel_time(planet, closest_enemy)
     end
   end
 
