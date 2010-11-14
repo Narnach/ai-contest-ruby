@@ -31,6 +31,8 @@ The readme contains notes with observations from live / TCP matches on weaknesse
 == Sniperbot todo / ideas
 
 * Use predicted future for all planets to calculate future ship count and planets' regeneration and to see if I should grow or attack.
+* For new maps, v12 is stronger than any later version, so this is the baseline that v17 has to beat before being eligible for submission.
+* A lot of new map have clusters of planets at large distances. Obviously it is to my advantage to conquer entire clusters: they are faster to reach and easier to defend once captured.
 
 == Different strategies
 
