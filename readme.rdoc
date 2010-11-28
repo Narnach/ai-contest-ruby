@@ -5,6 +5,48 @@ It started with a very naieve bot and a planetwars library from the starter kit.
 
 The readme contains notes with observations from live / TCP matches on weaknesses my bots have and how they could be fixed. Apparently this has worked out, since Sniperbot made it to rank 190, while Toolbot never got above rank 650-ish.
 
+After the map changes, it appeared that the latest versions of my bot were doing worse than older ones, so I re-submitted the commit tagged 'v12' as my final submission. Before that, 'v16' was the live bot. Both scored around rank 300-ish, but against each other v12 was the stronger one.
+
+== How my bots work
+
+The last couple of bots have used a modular strategy approach: they execute a number of strategies in order of importance. These strategies either send out fleets, explicitly reserve ships for defense or they do nothing.
+
+Most strategies look at one aspect of the game state and iterate over all planets to consider them. For example the Reinforce strategy: it looks at my planets and predicts the future for it based on inbound fleets and growth rate. If there are inbound hostile ships, it will reserve defending ships in order to not get captured. If there are too many inbound ships, it will ask for help and other planets will send ships to reinforce the planet.
+
+Over time my bots have incorporated strategies that my bots lost to on the live server. Sniping and supply lines are a direct result of this. Sniping is a very efficient way to capture planets and supply lines are a good way to get ships to planets that can use them either for defense or offense.
+
+Most of the bot code started as testing a simple strategy, then playing it against my test bots and refining it when I got an idea how to improve. Playing local games in the visualizer helped a lot here, but the live visualizer was also very important to let me discover weak patterns in my bots. Older commits of the readme have todo lists with things to update.
+
+Over time my popular bots have grown beyond their initial scope: Sniperbot started with only a sniping module, but now it has 6 distinct modules that each handle a different strategy:
+
+* A desperate all out attack: when I'm behind on both planets and ships, send out ALL ships on my planets. If this succeeds in capturing planets, I could get out ahead. It saved my bot's hide a couple of times by winning a game I should have lost.
+* A reinforcement strategy that reserves ships for defense and sends ships to planets that are under attack.
+* The sniper strategy: this one probably gets neglected the most now, but started out as a decent sniper target selection and attacking module.
+* Opportunity strategy: this is the main attack module that attacks non-owned planets based on return on investment and defensibility.
+* Supply the frontlines strategy: planets that are far enough away from enemies will send their available ships to a planet that is closer to its closest enemy planet.
+* Numerical superiority strategy: when ahead ship-wise and growth-wise, start 'bleeding' the enemy of ships.
+
+== How I use this code
+
+When developing, I run the current bot against a random bot to test for general functionality. I run against a specific bot on a specific map if I want to analyze a tournament loss or why specific moves are made. The following commands are used frequently.
+
+Run 2 random bots on a random map, then replay the match in the java visualizer and after that open the game log in TextMate
+
+  rake debug
+  rake debug BOT1=sniperbot       # Force bot1 to be sniperbot, still pick a random opponent and map.
+
+Run all bots against each other for a good number of turns (5 * participating bots)
+
+  rake tournament
+  rake tournament BOT1=sniperbot   # Play sniperbot in a tournament against all other bots
+
+Play the default bot on the tcp server
+
+  rake tcp
+  rake tcp DEBUG=true               # Show my bot's game log while it is playing on tcp
+
+For more commands, check out Rakefile. It got kinda big and messy over time, but I'm happy that I built all this functionality.
+
 == History
 
 * Naieve bot - the starter kit bot
@@ -13,6 +55,7 @@ The readme contains notes with observations from live / TCP matches on weaknesse
 * Seer. Introduced naieve future prediction (hence the name) and the use of different strategies in a linear fashion
 * Toolbot. Uses modules to encapsulate strategies. This makes them easier to share with other bots. It also considers global game state to decide to go offensive or defensive.
 * Sniperbot. Built initially to expose Toolbot's main weakness, but it was so much stronger that I made it my default bot and worked on making it more robust.
+* Areabot. An experiment in using a new model of looking at the game. Instead of looking at fleets and planets and ship counts, look at it as areas of influence. For each planet, how many ships can they get to each planet in how many turns? The faster they can get more ships on a planet, the bigger its influence. Do the same for the enemy and you can map the influence of each player on all planets. I think that using this will result in a very natural way to pick planets to attack and defend. Unfortunately I did not make the time to work more on this after my latest code frenzy.
 
 == Features designed and built
 
@@ -20,7 +63,8 @@ The readme contains notes with observations from live / TCP matches on weaknesse
 * Future prediction: given a planet and all known fleets, what is the certainty we have about the future? When will fleets invade and conquer the planet? How many ships does it need to reinforce against an invasion fleet?
 * Supply chains: over time, the planet that sends out most fleets to the enemy changes. If you don't setup supply lines, you will have long transit times for inbound fleets, which are easier to counter. In a game of perfect information, make sure there are lots of possibilities, but as little certainties as possible.
 * Defensive behavior: reserve ships to fight off potential or real attacks. Also keep in mind the effect of the closest enemy planet attacking me, how much ships are needed to fight that off?
-* Use predicted future to calculate which planet should receive supply chains. This may send the supply chain straight after a capture fleet to back it up and defend it against enemy reinforcements
+* Use predicted future to calculate which planet should receive supply chains. This may send the supply chain straight after a capture fleet to back it up and defend it against enemy reinforcements.
+* All-out desperate attack when a game appears lost.
 
 == Features / behavioral fixes / lessons learned
 
@@ -48,10 +92,10 @@ The readme contains notes with observations from live / TCP matches on weaknesse
   * Capture planets with a future prediction of a high number of turns, such as 50.
   * Do global future predictions. In 20 turns, am I ahead ship and growth-wise?
 * Model the universe as areas of influence (AoI).
-  * Besides picking high-growth planets, also try to prioritize the planets that increase my AoI. 
+  * Besides picking high-growth planets, also try to prioritize the planets that increase my AoI.
   * Planets within my AoI are always safe to capture, so they can be delayed by a little bit.
   * Picking off enemy planets that are over-extended should be prioritized highest, then capturing AoI-enlarging ones.
   * When there are no targets left within my own sphere of influence, then it is either time to start attacking my enemy or I have lost.
   * AoI can be modeled simply by using distances, but how many ships each player can get to each planet in X turns is also a very good model. This indicates defensibility of positions.
     * AoI modeling with ships can also aid in determining how many ships each planet has available: the potential amount of ships should never become negative. This can aid in determining targets: let ships 'flow' from positive to negative planets. Combined with predictions of actual ships counts, growths and fleets, this makes a good forecasting model.
-* Data needs to be accessible in a more object-oriented fashion. A lot of my helper methods operate in a functional fashion, repeating complex data retrieval loops multiple times because I want to use the data in different ways and in different places.
+* Data needs to be accessible in a more object-oriented fashion. A lot of my helper methods operate in a functional fashion, repeating complex data retrieval loops multiple times because I want to use the data in different ways and in different places. It's getting to the point where the functional approach starts to feel both unnatural and too verbose.
