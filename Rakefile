@@ -25,8 +25,8 @@ MAPS = Dir.glob("maps/*.txt")
 LBNS = BOTS.map{|bot| bot.size}.sort.last
 LMNS = MAPS.map{|map| map.size}.sort.last
 TAGS = `git tag -l`.split("\n").map{|tag| tag.strip}
-TCP_SERVER = "zeroviz.us" # "72.44.46.68"
-TCP_SERVER_PORT = "9999" # "995"
+TCP_SERVER = "98.247.248.39" # "zeroviz.us"
+TCP_SERVER_PORT = "995"
 TCP_SERVER_STATS_PORT = "8080"
 
 class Playgame
@@ -266,6 +266,23 @@ file "./tcp" do
   system "gcc tcp.c -o tcp"
 end
 
+# TCP_SERVER = "72.44.46.68"
+# TCP_SERVER_PORT = "995"
+# TCP_SERVER_STATS_PORT = "8080"
+# desc "Run the current default bot against the TCP server. Requires ./tcp to be compiled"
+# task :tcp => "./tcp" do
+#   player = 'narnach'
+#   password = 'nartest123'
+#   bot = ENV['BOT'] || ''
+#   if bot != '' && !File.exist?("bots/#{bot}.rb")
+#     puts "Bot #{bot} does not exist"
+#     exit 1
+#   end
+#   debug = ENV['DEBUG'] ? " -v " : ""
+#   system "./tcp #{TCP_SERVER} #{TCP_SERVER_PORT} #{player} -p #{password} ./MyBot.rb #{bot} #{debug} --stderr"
+#   system %Q[open "http://#{TCP_SERVER}:#{TCP_SERVER_STATS_PORT}/getplayer?player=#{player}"]
+# end
+
 desc "Run the current default bot against the TCP server. Requires ./tcp to be compiled"
 task :tcp => "./tcp" do
   player = 'narnach'
@@ -277,7 +294,7 @@ task :tcp => "./tcp" do
   end
   debug = ENV['DEBUG'] ? " -v " : ""
   system "./tcp #{TCP_SERVER} #{TCP_SERVER_PORT} #{player} -p #{password} ./MyBot.rb #{bot} #{debug} --stderr"
-  system %Q[open "http://#{TCP_SERVER}:#{TCP_SERVER_STATS_PORT}/getplayer?player=#{player}"]
+  system %Q[open "http://#{TCP_SERVER}:#{TCP_SERVER_STATS_PORT}/#{player}.html"]
 end
 
 desc "Run a tournament of random matchups. Set TURNS to change the turn count it from the number of maps."
