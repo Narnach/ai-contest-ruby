@@ -25,7 +25,8 @@ MAPS = Dir.glob("maps/*.txt")
 LBNS = BOTS.map{|bot| bot.size}.sort.last
 LMNS = MAPS.map{|map| map.size}.sort.last
 TAGS = `git tag -l`.split("\n").map{|tag| tag.strip}
-TCP_SERVER = "98.247.248.39" # "zeroviz.us"
+TCP_SERVER = "98.247.248.39"
+TCP_STATS_SERVER = "tcp.zeroviz.us"
 TCP_SERVER_PORT = "995"
 TCP_SERVER_STATS_PORT = "80"
 
@@ -73,6 +74,9 @@ class Playgame
     self.raw_output=true if self.analyze
     self.visualize = false if self.raw_output
     self.open_log=false if self.analyze
+  end
+
+  def self.find_bot(bot)
   end
 
   def cmd
@@ -188,7 +192,7 @@ class Tournament
   end
 
   protected
-  
+
   def match_stats(matches)
     bots = matches.map {|match| [match[:winner], match[:loser]]}.flatten.compact.uniq.sort
     bots.map do |bot|
@@ -285,16 +289,23 @@ end
 
 desc "Run the current default bot against the TCP server. Requires ./tcp to be compiled"
 task :tcp => "./tcp" do
-  player = ENV["USER"]
+  player = ENV['NAME'] || ENV["USER"]
   password = 'nartest123'
   bot = ENV['BOT'] || ''
-  if bot != '' && !File.exist?("bots/#{bot}.rb")
+  if bot =~ /^v\d+$/
+    bot_cmd = "submissions/#{bot}/MyBot.rb"
+  elsif File.exist?("bots/#{bot}.rb")
+    bot_cmd = "./MyBot.rb #{bot}"
+  elsif bot = ''
+    bot_cmd = "./MyBot.rb"
+  else
     puts "Bot #{bot} does not exist"
     exit 1
   end
   debug = ENV['DEBUG'] ? " -v " : ""
-  system "./tcp #{TCP_SERVER} #{TCP_SERVER_PORT} #{player} -p #{password} ./MyBot.rb #{bot} #{debug} --stderr"
-  system %Q[open "http://#{TCP_SERVER}:#{TCP_SERVER_STATS_PORT}/#{player}.html"] unless ENV["NOWEB"]
+  puts "Playing with #{bot_cmd} as #{player}"
+  system "./tcp #{TCP_SERVER} #{TCP_SERVER_PORT} #{player} -p #{password} #{bot_cmd} #{debug} --stderr"
+  system %Q[open "http://#{TCP_STATS_SERVER}:#{TCP_SERVER_STATS_PORT}/#{player}.html"] unless ENV["NOWEB"]
 end
 
 desc "Run a tournament of random matchups. Set TURNS to change the turn count it from the number of maps."
@@ -359,5 +370,19 @@ task :fix_submissions do
       line
     }.join("\n")
     File.open(file, "w") {|f| f.write(new_code)}
+  end
+end
+
+desc 'Loop the tcp server through multiple bots'
+task :tcp_loop do
+  loop do
+    {
+      "v12"=>"v12",
+      "v16"=>"v16",
+      "MyBot.rb"=>"current",
+    }.each do |bot, name|
+      system "rake tcp BOT=#{bot} NAME=narnach.#{name} NOWEB=#{ENV['NOWEB']}"
+      sleep 3
+    end
   end
 end
