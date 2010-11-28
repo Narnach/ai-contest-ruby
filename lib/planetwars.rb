@@ -96,6 +96,13 @@ class PlanetWars
     closest_planets(target, planets)
   end
 
+  # Higher is better. Negative score means the planet is closer to the enemy.
+  def distance_score(planet)
+    return 0 unless closest_enemy = closest_enemy_planets(planet).first
+    return 0 unless closest_friendly = my_closest_planets(planet).first
+    travel_time(planet, closest_enemy) - travel_time(planet, closest_friendly)
+  end
+
   def my_fleets
     @fleets.select {|fleet| fleet.owner == 1 }
   end

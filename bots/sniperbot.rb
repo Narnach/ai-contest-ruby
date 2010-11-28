@@ -14,7 +14,8 @@ class Sniperbot < AI
   # v10: Added DesperateAllOutAttackStrategy
   # v11: Execute DesperateAllOutAttackStrategy before supplying planets: adds more punch
   # v12: DesperateAllOutAttackStrategy kicks in later, capture planet algorithm accounts for distance to friendly planets
-  version 12
+  # v13: Tuned sniper targeting algorithms. Optimal target algorithms emphasize attacking the enemy over neutrals.
+  version 13
 
   def do_turn
     super
@@ -44,7 +45,8 @@ class Sniperbot < AI
 
     # Find all potentially sniper-able planets
     def potential_sniper_targets
-      easiest_planets_to_capture & @pw.enemy_fleets.map{|fleet| [fleet.destination_planet, fleet.source_planet]}.flatten.uniq.map{|planet_id| @pw.planets[planet_id]}
+      enemy_fleet_destinations = @pw.enemy_fleets.map{|fleet| [fleet.destination_planet, fleet.source_planet]}.flatten.uniq.map{|planet_id| @pw.planets[planet_id]}
+      enemy_fleet_destinations.select {|target| @pw.distance_score(target) > 0 }.sort_by {|target| -@pw.distance_score(target) }
     end
 
     # The best sniper targets are planets that will be conquered by the enemy's fleets,
@@ -53,8 +55,8 @@ class Sniperbot < AI
     def sniper_targets
       potential_sniper_targets.select do |planet|
         # Predict future accounting for all current fleets
-        max_travel_time = @pw.fleets_underway_to(planet).map{|fleet| fleet.turns_remaining}.max
-        predictions = predict_future_population(planet, max_travel_time)
+        max_travel_time = @pw.fleets_underway_to(planet).map{|fleet| fleet.turns_remaining}.max || 0
+        predictions = predict_future_population(planet, max_travel_time + 1)
 
         # Only go for planets that the enemy will eventually win
         next unless predictions.last.enemy?
@@ -227,10 +229,10 @@ class Sniperbot < AI
       return unless advantage > 0
       if @my_growth > @enemy_growth
         log "Using numerical superiority to weaken the enemy"
-        attack_with_fleet(advantage, easiest_planets_to_capture(@pw.enemy_planets, :pruning=>false))
+        attack_with_fleet(advantage/2, easiest_planets_to_capture(@pw.enemy_planets, :pruning=>false))
       else
         log "Using numerical superiority to capture nearby planets"
-        attack_with_fleet(advantage, easiest_planets_to_capture(@pw.enemy_planets))
+        attack_with_fleet(advantage/2, easiest_planets_to_capture(@pw.enemy_planets))
       end
     end
 

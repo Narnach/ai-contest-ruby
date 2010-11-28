@@ -27,7 +27,7 @@ LMNS = MAPS.map{|map| map.size}.sort.last
 TAGS = `git tag -l`.split("\n").map{|tag| tag.strip}
 TCP_SERVER = "98.247.248.39" # "zeroviz.us"
 TCP_SERVER_PORT = "995"
-TCP_SERVER_STATS_PORT = "8080"
+TCP_SERVER_STATS_PORT = "80"
 
 class Playgame
   DEFAULT_OPTIONS = {
@@ -285,7 +285,7 @@ end
 
 desc "Run the current default bot against the TCP server. Requires ./tcp to be compiled"
 task :tcp => "./tcp" do
-  player = 'narnach'
+  player = ENV["USER"]
   password = 'nartest123'
   bot = ENV['BOT'] || ''
   if bot != '' && !File.exist?("bots/#{bot}.rb")
@@ -294,7 +294,7 @@ task :tcp => "./tcp" do
   end
   debug = ENV['DEBUG'] ? " -v " : ""
   system "./tcp #{TCP_SERVER} #{TCP_SERVER_PORT} #{player} -p #{password} ./MyBot.rb #{bot} #{debug} --stderr"
-  system %Q[open "http://#{TCP_SERVER}:#{TCP_SERVER_STATS_PORT}/#{player}.html"]
+  system %Q[open "http://#{TCP_SERVER}:#{TCP_SERVER_STATS_PORT}/#{player}.html"] unless ENV["NOWEB"]
 end
 
 desc "Run a tournament of random matchups. Set TURNS to change the turn count it from the number of maps."

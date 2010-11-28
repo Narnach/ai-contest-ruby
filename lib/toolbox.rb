@@ -89,12 +89,14 @@ module Toolbox
       else
         distance_to_friendly = 0
       end
+      growth_rate_factor = planet.neutral? ? planet.growth_rate : 2 * planet.growth_rate
       # Lower score means more desirable
       # Higher growth means the total score will be lower
       # Longer distance to travel is less desirable, so should increase score
       # Longer distance from enemy planets decreases score as it is more defensible
+      # Enemy planet is double the value of a neutral, since it reduces the strength of the enemy
       next 0 if planet.growth_rate == 0
-      (planet.num_ships + nearest_fleet - regen_until_enemy_arrives + (distance_to_friendly*planet.growth_rate)) / planet.growth_rate
+      (planet.num_ships + nearest_fleet - regen_until_enemy_arrives + (distance_to_friendly*planet.growth_rate)) / growth_rate_factor
     end
   end
 
