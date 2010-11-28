@@ -93,7 +93,8 @@ class Sniperbot < AI
 
   module OpportunityStrategy
     def opportunity_strategy
-      easiest_planets_to_capture.each do |target|
+      targets = @my_growth <= @enemy_growth ? @pw.not_my_planets : @pw.enemy_planets
+      easiest_planets_to_capture(targets).each do |target|
         log "Opportunity target: planet #{target.planet_id}"
         try_attack_of_opportunity_on(target)
       end
@@ -227,17 +228,13 @@ class Sniperbot < AI
     def numerical_superiority_strategy
       advantage = @my_population - @enemy_population
       return unless advantage > 0
-      if @my_growth > @enemy_growth
-        log "Using numerical superiority to weaken the enemy"
-        attack_with_fleet(advantage/2, easiest_planets_to_capture(@pw.enemy_planets, :pruning=>false))
-      else
-        log "Using numerical superiority to capture nearby planets"
-        attack_with_fleet(advantage/2, easiest_planets_to_capture(@pw.enemy_planets))
-      end
+      return unless @my_growth > @enemy_growth
+      log "Using numerical superiority to weaken the enemy"
+      attack_with_fleet(advantage/2, easiest_planets_to_capture(@pw.enemy_planets, :pruning=>false))
     end
 
     def attack_with_fleet(total_ships_to_send, targets)
-      targets.each do |target|
+      easiest_planets_to_capture(targets, :pruning=>false).each do |target|
         return if total_ships_to_send <= 0
         @pw.my_closest_planets(target).each do |source|
           return if total_ships_to_send <= 0
