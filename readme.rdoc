@@ -99,3 +99,12 @@ For more commands, check out Rakefile. It got kinda big and messy over time, but
   * AoI can be modeled simply by using distances, but how many ships each player can get to each planet in X turns is also a very good model. This indicates defensibility of positions.
     * AoI modeling with ships can also aid in determining how many ships each planet has available: the potential amount of ships should never become negative. This can aid in determining targets: let ships 'flow' from positive to negative planets. Combined with predictions of actual ships counts, growths and fleets, this makes a good forecasting model.
 * Data needs to be accessible in a more object-oriented fashion. A lot of my helper methods operate in a functional fashion, repeating complex data retrieval loops multiple times because I want to use the data in different ways and in different places. It's getting to the point where the functional approach starts to feel both unnatural and too verbose.
+
+== Credits
+
+* Wes 'Narnach' Oldenbeuving (me!) for the bots and core libraries
+* Vikhyat Korrapati for the Ruby starter kit, whose game state parser code I still use: https://github.com/vikhyat/ai-contest-ruby
+
+== License
+
+This code is licensed under the MIT license.
